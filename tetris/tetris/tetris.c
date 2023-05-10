@@ -134,6 +134,7 @@ int best_score = 0; //최고게임점수
 
 void title_scene(void);
 void game_scene(void);
+void setting_scene(void);
 
 void reset_org(void); //main_org[][]를 초기화
 void reset_cpy(void); // 게임판(main_cpy[][]를 초기화)
