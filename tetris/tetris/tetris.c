@@ -163,9 +163,7 @@ void reset_cpy(void); // 게임판(main_cpy[][]를 초기화)
 
 //콘솔창 draw/erase 함수
 void draw_title_scene(int x, int y, TITLE_MENU menu);
-
 void draw_setting_scene(int x, int y, KEY_TYPE type);
-
 void draw_game_scene(void);
 void draw_map(int x, int y); // (x,y)를 기준으로 맵을 그림.
 void draw_interface(int x, int y); // (x,y)를 기준으로 기본인터페이스 그리기
@@ -242,7 +240,7 @@ void title_scene(void) {
     gotoxy(x, y + 3); printf("■■□■■  □  ■  □□■□□"); Sleep(100);
     gotoxy(x, y + 4); printf("■■  ■□□□■■■□■■□□"); Sleep(100);
     gotoxy(x + 5, y + 2); printf("T E T R I S"); Sleep(100);
-    gotoxy(x, y + 6); printf("> Press Enter <");
+    gotoxy(x, y + 6); printf(" Press Enter ");
     title_set(x, y, menu);
 
     for (cnt = 0;; cnt++) { //cnt를 1씩 증가시키면서 계속 반복    //하나도 안중요한 별 반짝이는 애니메이션효과
@@ -284,6 +282,8 @@ void title_scene(void) {
     }
 
 }
+
+
 
 void title_set(int x, int y, TITLE_MENU menu) {
     switch (menu) {
