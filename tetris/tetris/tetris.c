@@ -9,13 +9,13 @@
 
 
 /// 키보드 값들
-#define LEFT 75 //좌측 화살표
-#define RIGHT 77 //우측 화살표
-#define UP 72 //위쪽 화살표
-#define DOWN 80 //아래쪽 화살표
-#define SPACE 32 //스페이스
-#define ESC 27 //이스케이프
-#define ENTER 13
+#define LEFT 75 // 좌측 화살표
+#define RIGHT 77 // 우측 화살표
+#define UP 72 // 위쪽 화살표
+#define DOWN 80 // 아래쪽 화살표
+#define SPACE 32 // 스페이스
+#define ESC 27 // 이스케이프
+#define ENTER 13 // 엔터
 
 #define CURSOR_OFF "   "
 #define CURSOR_ON_LEFT ">> "
@@ -55,8 +55,9 @@ int esc_key[2] = { ESC, };
 #define STATUS_X_ADJ(X_ADJ,X) X_ADJ+X+1 //게임정보표시 위치조정 
 
 typedef enum { GAME_START = 0, KEY_SETTING, EXIT }TITLE_MENU;
-//typedef enum { LEFT_MENU = 0, RIGHT_MENU, DOWN_MENU, HARD_DROP_MENU, ROTATE_MENU, ROTATE_COUNTER_MENU, HOLD_MENU, PAUSE_MENU, BACK_MENU, MAIN_MENU }SETTING_MENU;
 typedef enum { LEFT_KEY = 0, RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
+
+
 /*
 int STATUS_Y_GOAL; //GOAL 정보표시위치Y 좌표 저장
 int STATUS_Y_LEVEL; //LEVEL 정보표시위치Y 좌표 저장
@@ -88,6 +89,8 @@ int blocks[7][4][4][4] = {
  {0,0,0,0,1,1,1,0,0,1,0,0,0,0,0,0},{0,1,0,0,1,1,0,0,0,1,0,0,0,0,0,0}} // T
 }; //블록모양 저장 4*4공간에 블록을 표현 blcoks[b_type][b_rotation][i][j]로 사용 // 숫자가 커지면 시계방향 작아지면 반시계 방향
 
+
+
 int wall_kick_data[2][4][2][5][2] = {
     {{{{0,0},{-2,0},{1,0},{-2,-1},{1,2}},
     {{0,0},{-1,0},{2,0},{-1,2},{2,-1}}},
@@ -115,12 +118,14 @@ int wall_kick_data[2][4][2][5][2] = {
     {{0,0},{-1,0},{-1,-1},{0,2},{-1,2}}}}
 }; // block index = 0 이면 회전 X, index =1 이면 0번표, 그외 1번표 참조 검사
 //data[index참조][현재 rotation index][시계방향 - 0, 반시계방향 - 1][5][2] 
+//dx는 더하고, dy는 빼야함 주요요요요용
 
 
-int b_type[7] = { 0,1,2,3,4,5,6 }; //테트리스 가방 정렬
-int b_rotation; //블록 회전값 저장 
+int b_type[7] = { 0,1,2,3,4,5,6 }; // 테트리스 가방 정렬
+int b_rotation; // 블록 회전값 저장 
 int b_now; // 현재 인덱스 저장 
-int bx, by; //이동중인 블록의 게임판상의 x,y좌표를 저장 
+int bx, by; // 이동중인 블록의 게임판상의 x,y좌표를 저장 
+
 
 int main_org[2][XY_MAX][XY_MAX]; //게임판의 정보를 저장하는 배열 모니터에 표시후에 main_cpy로 복사됨 
 int main_cpy[2][XY_MAX][XY_MAX]; //즉 maincpy는 게임판이 모니터에 표시되기 전의 정보를 가지고 있음 
@@ -136,6 +141,8 @@ int crush_on = 0; //현재 이동중인 블록이 충돌상태인지 알려주는 flag
 int level_up_on = 0; //다음레벨로 진행(현재 레벨목표가 완료되었음을) 알리는 flag 
 int space_key_on = 0; //hard drop상태임을 알려주는 flag 
 
+
+
 int speed; //게임진행속도 
 int level; //현재 level 
 int level_goal; //다음레벨로 넘어가기 위한 목표점수 
@@ -145,33 +152,40 @@ int last_score = 0; //마지막게임점수
 int best_score = 0; //최고게임점수 
 
 void title_scene(void);
-void game_scene(void);
+
 void setting_scene(void);
+
+void game_scene(void);
+
 
 void reset_org(void); //main_org[][]를 초기화
 void reset_cpy(void); // 게임판(main_cpy[][]를 초기화)
 
 //콘솔창 draw/erase 함수
-void draw_title_scene(void);
+void draw_title_scene(int x, int y, TITLE_MENU menu);
+
+void draw_setting_scene(int x, int y, KEY_TYPE type);
+
 void draw_game_scene(void);
 void draw_map(int x, int y); // (x,y)를 기준으로 맵을 그림.
 void draw_interface(int x, int y); // (x,y)를 기준으로 기본인터페이스 그리기
 void erase_scene(int x, int y, int dx, int dy);
 void draw_block(int x, int y, int b_type, int b_rotation);
 
+char* key_string_set(char key);
+char* key_set(int* key);
+// 스트링 타입으로 변환하는 함수
 
+void setting_set(int x, int y, KEY_TYPE type);
+void setting_key_setting(int x, int y, KEY_TYPE type);
+void title_set(int x, int y, TITLE_MENU menu);
+
+void setting_scene_set(int x, int y, KEY_TYPE type);
 
 int new_block();// 새로운 블록의 key 가져오기
 int check_key(void); // 키보드로 키 받아오기
 int check_is_upper(int key); // 키보드로  받아온 키 대문자 검사
-int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 
-
-void key_upper_check(char* key, char input);
-char* key_string_set(char key);
-void setting_set(int x, int y, KEY_TYPE type);
-void setting_key_setting(int x, int y, KEY_TYPE type);
-char* key_set(int* key);
-void title_set(int x, int y, TITLE_MENU menu);
+int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
 
 
 
@@ -181,8 +195,9 @@ void gotoxy(int x, int y) { //gotoxy함수
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
-typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE; //커서숨기는 함수에 사용되는 열거형 
 
+
+typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE; //커서숨기는 함수에 사용되는 열거형 
 void setcursortype(CURSOR_TYPE c) { //커서숨기는 함수 
     CONSOLE_CURSOR_INFO CurInfo;
 
@@ -206,18 +221,12 @@ void setcursortype(CURSOR_TYPE c) { //커서숨기는 함수
 
 int main() {
     int i;
-
     srand((unsigned)time(NULL)); //난수표생성
     setcursortype(NOCURSOR); //커서 없앰
+
     title_scene(); //메인타이틀 호출
 }
 
-void key_upper_check(char* key, char input) {
-    if ('A' < input < 'Z') {
-        input = input - 'A' + 'a';
-    }
-    *key = input;
-}
 
 void title_scene(void) {
     int x = 5; //타이틀화면이 표시되는 x좌표
@@ -457,7 +466,5 @@ void setting_set(int x, int y, KEY_TYPE type) {
         break;
 
     }
-
-
 
 }
