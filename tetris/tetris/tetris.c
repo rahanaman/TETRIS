@@ -163,6 +163,7 @@ void gotoxy(int x, int y) { //gotoxy함수
 }
 
 typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE; //커서숨기는 함수에 사용되는 열거형 
+
 void setcursortype(CURSOR_TYPE c) { //커서숨기는 함수 
     CONSOLE_CURSOR_INFO CurInfo;
 
