@@ -7,7 +7,6 @@
 #include<stdlib.h>
 #include <string.h>
 
-DWORD WINAPI ThreadFunc(LPVOID);
 
 /// 키보드 값들
 #define LEFT 75 // 좌측 화살표
@@ -22,10 +21,10 @@ DWORD WINAPI ThreadFunc(LPVOID);
 #define CURSOR_ON_LEFT ">> "
 #define CURSOR_ON_RIGHT " <<"
 
-#define LEFT_CHAR "   ←  "
-#define UP_CHAR "   ↑  "
-#define RIGHT_CHAR "   →  "
-#define DOWN_CHAR "   ↓  "
+#define LEFT_CHAR "   ← "
+#define UP_CHAR "   ↑ "
+#define RIGHT_CHAR "   → "
+#define DOWN_CHAR "   ↓ "
 #define SPACE_CHAR "SPACE"
 #define ENTER_CHAR "ENTER"
 #define ESC_CHAR " ESC "
@@ -36,6 +35,9 @@ DWORD WINAPI ThreadFunc(LPVOID);
 #define true 1
 
 
+#define P1 0
+#define P2 1
+
 
 #define ACTIVE_BLOCK -2 // 게임판배열에 저장될 블록의 상태들 
 #define CEILLING -1     // 블록이 이동할 수 있는 공간은 0 또는 음의 정수료 표현 
@@ -45,7 +47,6 @@ DWORD WINAPI ThreadFunc(LPVOID);
 
 
 #define XY_MAX 50
-#define STATUS_X_ADJ(X_ADJ,X) X_ADJ+X+1 //게임정보표시 위치조정 
 
 typedef enum { GAME_START = 0, KEY_SETTING, EXIT }TITLE_MENU;
 typedef enum { LEFT_KEY = 0, RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
@@ -57,8 +58,8 @@ int STATUS_Y_LEVEL; //LEVEL 정보표시위치Y 좌표 저장
 int STATUS_Y_SCORE; //SCORE 정보표시위치Y 좌표 저장
 */
 
-int left_key = 128 + LEFT;
-int right_key = 128 + RIGHT;
+int left_key[2] = { 128 + LEFT, '4'};
+int right_key[2] = { 128 + RIGHT ,6};
 int down_key = 128 + DOWN;
 int hard_drop_key = ' ';
 int rotate_key = 'X';
@@ -153,10 +154,9 @@ int last_score = 0; //마지막게임점수
 int best_score = 0; //최고게임점수 
 
 void title_scene(void);
-
 void setting_scene(void);
-
 void game_scene(void);
+void mode_select_scene(void);
 
 
 void reset_org(void); //main_org[][]를 초기화
@@ -164,9 +164,8 @@ void reset_cpy(void); // 게임판(main_cpy[][]를 초기화)
 
 //콘솔창 draw/erase 함수
 void draw_title_scene(int x, int y, TITLE_MENU menu);
-void draw_setting_scene(int x, int y, KEY_TYPE type);
 void draw_game_scene(void);
-void draw_map(int x, int y); // (x,y)를 기준으로 맵을 그림.
+void draw_map(int x, int y, int dx, int dy); // (x,y)를 기준으로 맵을 그림.
 void draw_interface(int x, int y); // (x,y)를 기준으로 기본인터페이스 그리기
 void erase_scene(int x, int y, int dx, int dy);
 void draw_block(int x, int y, int b_type, int b_rotation);
@@ -175,11 +174,10 @@ char* key_string_set(int key);
 char* key_set(int key);
 // 스트링 타입으로 변환하는 함수
 
-void setting_set(int x, int y, KEY_TYPE type);
-void setting_key_setting(int x, int y, KEY_TYPE type);
-void title_set(int x, int y, TITLE_MENU menu);
 
-void setting_scene_set(int x, int y, KEY_TYPE type);
+void draw_setting_scene_player(int x, int y, int player);
+void setting_scene_set(int x, int y, KEY_TYPE type, int player); // 옵션 받아오기
+void draw_setting_scene(int x, int y, KEY_TYPE type, int player);
 
 int new_block();// 새로운 블록의 key 가져오기
 int check_key(void); // 키보드로 키 받아오기
@@ -187,7 +185,7 @@ int check_is_upper(int key); // 키보드로  받아온 키 대문자 검사
 int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
 
 unsigned main_theme(void* arg);
-int bpm = 200; // 16분 음표 bpm
+int bpm = 125; // 16분 음표 bpm
 //1 bpm 16 2 bpm 8 4bpm 4
 
 
@@ -238,30 +236,29 @@ unsigned main_theme(void* arg) {
         Beep(880.0000f, 4 * bpm);
         Beep(880.0000f, 6 * bpm);
 
-        Beep(1318.5100f, 6 * bpm);
-        Beep(1046.5020f, 6 * bpm);
-        Beep(1174.6590f, 6 * bpm);
-        Beep(987.7666f, 6 * bpm);
-        Beep(1046.5020f, 6 * bpm);
-        Beep(880.0000f, 6 * bpm);
-        Beep(830.6100f, 6 * bpm);
-        Beep(987.7666f, 6 * bpm);
-        Beep(1318.5100f, 6 * bpm);
-        Beep(1046.5020f, 6 * bpm);
-        Beep(1174.6590f, 6 * bpm);
-        Beep(987.7666f, 6 * bpm);
+        Beep(1318.5100f, 8 * bpm);
+        Beep(1046.5020f, 8 * bpm);
+        Beep(1174.6590f, 8 * bpm);
+        Beep(987.7666f, 8 * bpm);
+        Beep(1046.5020f, 8 * bpm);
+        Beep(880.0000f, 8 * bpm);
+        Beep(830.6100f, 8 * bpm);
+        Beep(987.7666f, 8 * bpm);
+        Beep(1318.5100f, 8 * bpm);
+        Beep(1046.5020f, 8 * bpm);
+        Beep(1174.6590f, 8 * bpm);
+        Beep(987.7666f, 8 * bpm);
         Beep(1046.5020f, 4 * bpm);
         Beep(1318.5100f, 4 * bpm);
         Beep(1760.0000f, 4 * bpm);
         Beep(1760.0000f, 4 * bpm);
-        Beep(1661.2200f, 6 * bpm);
+        Beep(1661.2200f, 8 * bpm);
 
 
     }
 
 
 }
-
 
 
 
@@ -298,7 +295,7 @@ int main() {
     HANDLE hThrd;
     //main_theme(0);
     _beginthreadex(NULL, 0, main_theme, 0,0,NULL);
-    //CloseHandle(hThrd);
+
     int i;
     srand((unsigned)time(NULL)); //난수표생성
     setcursortype(NOCURSOR); //커서 없앰
@@ -324,6 +321,7 @@ void draw_title_scene(int x, int y, TITLE_MENU menu) {
         gotoxy(x, y + 13); printf(CURSOR_ON_LEFT); printf("Exit"); printf(CURSOR_ON_RIGHT);
     }
 }
+
 
 void title_scene(void) {
     int x = 5; //타이틀화면이 표시되는 x좌표
@@ -369,6 +367,7 @@ void title_scene(void) {
 
     switch (menu) {
     case GAME_START:
+        system("cls");
         break;
     case KEY_SETTING:
         system("cls");
@@ -387,20 +386,97 @@ void setting_scene() {
     int x = 5; //타이틀화면이 표시되는 x좌표
     int y = 3; //타이틀화면이 표시되는 y좌표
     KEY_TYPE key = LEFT_KEY;
-    gotoxy(x, y + 0); printf("▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤");
-    gotoxy(x, y + 1); printf("▤                                     ▤");
-    gotoxy(x, y + 2); printf("▤      +-----------------------+      ▤");
-    gotoxy(x, y + 3); printf("▤      |     S E T T I N G     |      ▤");
-    gotoxy(x, y + 4); printf("▤      +-----------------------+      ▤");
-    gotoxy(x, y + 5); printf("▤                                     ▤");
-    gotoxy(x, y + 15); printf("▤                                     ▤");
-    gotoxy(x, y + 16); printf("▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤");
-    setting_key_setting(x, y, key);
+    int player = P1;
+    draw_setting_scene_player(x, y, player);
+    setting_scene_set(x, y, key,player);
 
 
 }
 
-void setting_new_key(int x, int y, int* key_set, KEY_TYPE type) {
+void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
+    draw_setting_scene(x, y, type);
+    while (1) {
+        if (_kbhit()) {
+            key = _getch();
+            if (key == ESC) {
+                system("cls");
+                title_scene();
+            }
+            if (key == ENTER) break;
+            if (key == 224) {
+                do { key = _getch(); } while (key == 224);//방향키지시값을 버림
+                switch (key) {
+                case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
+                    type = (type + 1) % 7;
+                    while (_kbhit()) _getch();
+                    draw_setting_scene(x, y, type);
+                    break;
+                case UP: //위쪽 방향키 눌렀을때
+                    type = (type + 6) % 7;
+                    while (_kbhit()) _getch();
+                    draw_setting_scene(x, y, type);
+                    break;
+                case RIGHT:
+                case LEFT:
+                    player = 1 - player;
+                    draw_setting_scene_player(x, y, player);
+                    draw_setting_scene(x, y, type);
+
+                }
+            }
+
+        }
+    }
+    switch (type) {
+    case LEFT_KEY:
+        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", " ->", key_set(left_key), " <-");
+        setting_new_key(x, y, left_key, type, player);
+        break;
+    case RIGHT_KEY:
+        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
+        break;
+    case DOWN_KEY:
+        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
+        break;
+    case HARD_DROP_KEY:
+        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
+        break;
+    case ROTATE_KEY:
+        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
+        break;
+    case ROTATE_COUNTER_KEY:
+        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
+        break;
+    case HOLD_KEY:
+        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
+        break;
+    }
+}
+
+void draw_setting_scene_player(int x, int y, int player) {
+    if (player == P1) {
+        gotoxy(x, y + 0); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
+        gotoxy(x, y + 1); printf("▤                                      ▤");
+        gotoxy(x, y + 2); printf("▤      +-----------------------+       ▤");
+        gotoxy(x, y + 3); printf("▤      |   S E T T I N G - P1  |       ▤");
+        gotoxy(x, y + 4); printf("▤      +-----------------------+       ▤");
+        gotoxy(x, y + 5); printf("▤                                      ▤");
+        gotoxy(x, y + 15); printf("▤                                      ▤");
+        gotoxy(x, y + 16); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
+    }
+    if (player == P2) {
+        gotoxy(x, y + 0); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
+        gotoxy(x, y + 1); printf("▤                                      ▤");
+        gotoxy(x, y + 2); printf("▤      +-----------------------+       ▤");
+        gotoxy(x, y + 3); printf("▤      |   S E T T I N G - P2  |       ▤");
+        gotoxy(x, y + 4); printf("▤      +-----------------------+       ▤");
+        gotoxy(x, y + 5); printf("▤                                      ▤");
+        gotoxy(x, y + 15); printf("▤                                      ▤");
+        gotoxy(x, y + 16); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
+    }
+}
+
+void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, int player) {
     while (1) {
         if (_kbhit()) {
             key = _getch();
@@ -418,58 +494,7 @@ void setting_new_key(int x, int y, int* key_set, KEY_TYPE type) {
     //gotoxy(x+13, y); printf("ERROR");
 }
 
-void setting_key_setting(int x, int y, KEY_TYPE type) {
-    setting_set(x, y, type);
-    while (1) {
-        if (_kbhit()) {
-            key = _getch();
-            if (key == ESC) {
-                system("cls");
-                title_scene();
-            }
-            if (key == ENTER) break;
-            if (key == 224) {
-                do { key = _getch(); } while (key == 224);//방향키지시값을 버림
-                switch (key) {
-                case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
-                    type = (type + 1) % 7;
-                    setting_set(x, y, type);
-                    break;
-                case UP: //위쪽 방향키 눌렀을때
-                    type = (type + 6) % 7;
-                    setting_set(x, y, type);
-                }
-            }
-            while (_kbhit()) _getch();
-        }
-    }
-    switch (type) {
-    case LEFT_KEY:
-        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s  ▤", " ->", key_set(left_key), " <-");
-        setting_new_key(x, y, left_key, type);
-        break;
-    case RIGHT_KEY:
-        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
-        break;
-    case DOWN_KEY:
-        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
-        break;
-    case HARD_DROP_KEY:
-        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
-        break;
-    case ROTATE_KEY:
-        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
-        break;
-    case ROTATE_COUNTER_KEY:
-        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
-        break;
-    case HOLD_KEY:
-        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
-        break;
 
-
-    }
-}
 
 char* key_set(int key) {
     if (key > 128) {
@@ -507,41 +532,41 @@ char* key_string_set(int key) {
     return key_string;
 }
 
-void setting_set(int x, int y, KEY_TYPE type) {
-    gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s  ▤", CURSOR_OFF, key_set(left_key), CURSOR_OFF);
-    gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s  ▤", CURSOR_OFF, key_set(right_key), CURSOR_OFF);
-    gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s  ▤", CURSOR_OFF, key_set(down_key), CURSOR_OFF);
-    gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s  ▤", CURSOR_OFF, key_set(hard_drop_key), CURSOR_OFF);
-    gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s  ▤", CURSOR_OFF, key_set(rotate_key), CURSOR_OFF);
-    gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s  ▤", CURSOR_OFF, key_set(rotate_counter_key), CURSOR_OFF);
-    gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s  ▤", CURSOR_OFF, key_set(hold_key), CURSOR_OFF);
-    gotoxy(x, y + 13); printf("▤                                     ▤");
-    gotoxy(x, y + 14); printf("▤      PRESS ESC TO BACK TO MAIN      ▤");
+void draw_setting_scene(int x, int y, KEY_TYPE type,int player) {
+    gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", CURSOR_OFF, key_set(left_key), CURSOR_OFF);
+    gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_OFF, key_set(right_key), CURSOR_OFF);
+    gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_OFF, key_set(down_key), CURSOR_OFF);
+    gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_OFF, key_set(hard_drop_key), CURSOR_OFF);
+    gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_OFF, key_set(rotate_key), CURSOR_OFF);
+    gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_OFF, key_set(rotate_counter_key), CURSOR_OFF);
+    gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_OFF, key_set(hold_key), CURSOR_OFF);
+    gotoxy(x, y + 13); printf("▤                                      ▤");
+    gotoxy(x, y + 14); printf("▤      PRESS ESC TO BACK TO MAIN       ▤");
 
 
     switch (type) {
     case LEFT_KEY:
-        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(left_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(left_key), CURSOR_ON_RIGHT);
         break;
     case RIGHT_KEY:
-        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
         break;
     case DOWN_KEY:
-        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
         break;
     case HARD_DROP_KEY:
-        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_KEY:
-        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_COUNTER_KEY:
-        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
         break;
     case HOLD_KEY:
-        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s  ▤", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
         break;
 
     }
-
 }
+
