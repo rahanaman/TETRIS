@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS //scanf, strcpy ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+#define _CRT_SECURE_NO_WARNINGS //scanf, strcpy ¿À·ù ¹«½Ã
 
 #include<stdio.h>
 #include<windows.h>
@@ -8,23 +8,23 @@
 #include <string.h>
 
 
-/// Å°ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-#define LEFT 75 // ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½Ç¥
-#define RIGHT 77 // ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½Ç¥
-#define UP 72 // ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½Ç¥
-#define DOWN 80 // ï¿½Æ·ï¿½ï¿½ï¿½ È­ï¿½ï¿½Ç¥
-#define SPACE 32 // ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½
-#define ESC 27 // ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-#define ENTER 13 // ï¿½ï¿½ï¿½ï¿½
+/// Å°º¸µå °ªµé
+#define LEFT 75 // ÁÂÃø È­»ìÇ¥
+#define RIGHT 77 // ¿ìÃø È­»ìÇ¥
+#define UP 72 // À§ÂÊ È­»ìÇ¥
+#define DOWN 80 // ¾Æ·¡ÂÊ È­»ìÇ¥
+#define SPACE 32 // ½ºÆäÀÌ½º
+#define ESC 27 // ÀÌ½ºÄÉÀÌÇÁ
+#define ENTER 13 // ¿£ÅÍ
 
 #define CURSOR_OFF "   "
 #define CURSOR_ON_LEFT ">> "
 #define CURSOR_ON_RIGHT " <<"
 
-#define LEFT_CHAR "   ï¿½ï¿½ "
-#define UP_CHAR "   ï¿½ï¿½ "
-#define RIGHT_CHAR "   ï¿½ï¿½ "
-#define DOWN_CHAR "   ï¿½ï¿½ "
+#define LEFT_CHAR "   ¡ç "
+#define UP_CHAR "   ¡è "
+#define RIGHT_CHAR "   ¡æ "
+#define DOWN_CHAR "   ¡é "
 #define SPACE_CHAR "SPACE"
 #define ENTER_CHAR "ENTER"
 #define ESC_CHAR " ESC "
@@ -39,11 +39,11 @@
 #define P2 1
 
 
-#define ACTIVE_BLOCK -2 // ï¿½ï¿½ï¿½ï¿½ï¿½Ç¹è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Âµï¿½ 
-#define CEILLING -1     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0 ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ 
-#define EMPTY 0         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ 
+#define ACTIVE_BLOCK -2 // °ÔÀÓÆÇ¹è¿­¿¡ ÀúÀåµÉ ºí·ÏÀÇ »óÅÂµé 
+#define CEILLING -1     // ºí·ÏÀÌ ÀÌµ¿ÇÒ ¼ö ÀÖ´Â °ø°£Àº 0 ¶Ç´Â À½ÀÇ Á¤¼ö·á Ç¥Çö 
+#define EMPTY 0         // ºí·ÏÀÌ ÀÌµ¿ÇÒ ¼ö ¾ø´Â °ø°£Àº ¾ç¼ö·Î Ç¥Çö 
 #define WALL 1
-#define INACTIVE_BLOCK 2 // ï¿½Ìµï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ï¿½ ï¿½ï¿½ï¿½Ï°ï¿½ 
+#define INACTIVE_BLOCK 2 // ÀÌµ¿ÀÌ ¿Ï·áµÈ ºí·Ï°ª 
 
 
 #define XY_MAX 50
@@ -53,9 +53,9 @@ typedef enum { LEFT_KEY = 0, RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROT
 
 
 /*
-int STATUS_Y_GOAL; //GOAL ï¿½ï¿½ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ï¿½Ä¡Y ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½
-int STATUS_Y_LEVEL; //LEVEL ï¿½ï¿½ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ï¿½Ä¡Y ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½
-int STATUS_Y_SCORE; //SCORE ï¿½ï¿½ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ï¿½Ä¡Y ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½
+int STATUS_Y_GOAL; //GOAL Á¤º¸Ç¥½ÃÀ§Ä¡Y ÁÂÇ¥ ÀúÀå
+int STATUS_Y_LEVEL; //LEVEL Á¤º¸Ç¥½ÃÀ§Ä¡Y ÁÂÇ¥ ÀúÀå
+int STATUS_Y_SCORE; //SCORE Á¤º¸Ç¥½ÃÀ§Ä¡Y ÁÂÇ¥ ÀúÀå
 */
 
 int left_key[2] = { 128 + LEFT, '4'};
@@ -89,7 +89,7 @@ int blocks[7][4][4][4] = {
 
 {{0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0},{0,1,0,0,0,1,1,0,0,1,0,0,0,0,0,0},
  {0,0,0,0,1,1,1,0,0,1,0,0,0,0,0,0},{0,1,0,0,1,1,0,0,0,1,0,0,0,0,0,0}} // T
-}; //ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 4*4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ blcoks[b_type][b_rotation][i][j]ï¿½ï¿½ ï¿½ï¿½ï¿½ // ï¿½ï¿½ï¿½Ú°ï¿½ Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ ï¿½Û¾ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ý½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½
+}; //ºí·Ï¸ð¾ç ÀúÀå 4*4°ø°£¿¡ ºí·ÏÀ» Ç¥Çö blcoks[b_type][b_rotation][i][j]·Î »ç¿ë // ¼ýÀÚ°¡ Ä¿Áö¸é ½Ã°è¹æÇâ ÀÛ¾ÆÁö¸é ¹Ý½Ã°è ¹æÇâ
 
 
 
@@ -118,40 +118,40 @@ int wall_kick_data[2][4][2][5][2] = {
 
     {{{0,0},{-1,0},{-1,-1},{0,2},{-1,2}},
     {{0,0},{-1,0},{-1,-1},{0,2},{-1,2}}}}
-}; // block index = 0 ï¿½Ì¸ï¿½ È¸ï¿½ï¿½ X, index =1 ï¿½Ì¸ï¿½ 0ï¿½ï¿½Ç¥, ï¿½×¿ï¿½ 1ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½
-//data[indexï¿½ï¿½ï¿½ï¿½][ï¿½ï¿½ï¿½ï¿½ rotation index][ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ - 0, ï¿½Ý½Ã°ï¿½ï¿½ï¿½ï¿½ - 1][5][2] 
-//dxï¿½ï¿½ ï¿½ï¿½ï¿½Ï°ï¿½, dyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¿ï¿½ï¿½ï¿½ï¿½ï¿½
+}; // block index = 0 ÀÌ¸é È¸Àü X, index =1 ÀÌ¸é 0¹øÇ¥, ±×¿Ü 1¹øÇ¥ ÂüÁ¶ °Ë»ç
+//data[indexÂüÁ¶][ÇöÀç rotation index][½Ã°è¹æÇâ - 0, ¹Ý½Ã°è¹æÇâ - 1][5][2] 
+//dx´Â ´õÇÏ°í, dy´Â »©¾ßÇÔ ÁÖ¿ä¿ä¿ä¿ä¿ë
 
 
-int b_type[7] = { 0,1,2,3,4,5,6 }; // ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-int b_rotation; // ï¿½ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
-int b_now; // ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
-int bx, by; // ï¿½Ìµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç»ï¿½ï¿½ï¿½ x,yï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
+int b_type[7] = { 0,1,2,3,4,5,6 }; // Å×Æ®¸®½º °¡¹æ Á¤·Ä
+int b_rotation; // ºí·Ï È¸Àü°ª ÀúÀå 
+int b_now; // ÇöÀç ÀÎµ¦½º ÀúÀå 
+int bx, by; // ÀÌµ¿ÁßÀÎ ºí·ÏÀÇ °ÔÀÓÆÇ»óÀÇ x,yÁÂÇ¥¸¦ ÀúÀå 
 
 
-int main_org[2][XY_MAX][XY_MAX]; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ Ç¥ï¿½ï¿½ï¿½Ä¿ï¿½ main_cpyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 
-int main_cpy[2][XY_MAX][XY_MAX]; //ï¿½ï¿½ maincpyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ Ç¥ï¿½ÃµÇ±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
-//mainï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ Ç¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½(ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Å¸ï¿½) 
-//main_cpyï¿½ï¿½ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½ï¿½Ä§ 
-
-
-
-
-int key; //Å°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·Â¹ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
-int new_block_on = 0; //ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ï¿½ï¿½ flag 
-int crush_on = 0; //ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½æµ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë·ï¿½ï¿½Ö´ï¿½ flag 
-int level_up_on = 0; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½Ï·ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½ï¿½) ï¿½Ë¸ï¿½ï¿½ï¿½ flag 
-int space_key_on = 0; //hard dropï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë·ï¿½ï¿½Ö´ï¿½ flag 
+int main_org[2][XY_MAX][XY_MAX]; //°ÔÀÓÆÇÀÇ Á¤º¸¸¦ ÀúÀåÇÏ´Â ¹è¿­ ¸ð´ÏÅÍ¿¡ Ç¥½ÃÈÄ¿¡ main_cpy·Î º¹»çµÊ 
+int main_cpy[2][XY_MAX][XY_MAX]; //Áï maincpy´Â °ÔÀÓÆÇÀÌ ¸ð´ÏÅÍ¿¡ Ç¥½ÃµÇ±â ÀüÀÇ Á¤º¸¸¦ °¡Áö°í ÀÖÀ½ 
+//mainÀÇ ÀüÃ¼¸¦ °è¼Ó ¸ð´ÏÅÍ¿¡ Ç¥½ÃÇÏÁö ¾Ê°í(ÀÌ·¸°Ô ÇÏ¸é ¸ð´ÏÅÍ°¡ ±ôºý°Å¸²) 
+//main_cpy¿Í ¹è¿­À» ºñ±³ÇØ¼­ °ªÀÌ ´Þ¶óÁø °÷¸¸ ¸ð´ÏÅÍ¿¡ °íÄ§ 
 
 
 
-int speed; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ 
-int level; //ï¿½ï¿½ï¿½ï¿½ level 
-int level_goal; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¾î°¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ï¿½ 
-int cnt; //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
-int score; //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
-int last_score = 0; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
-int best_score = 0; //ï¿½Ö°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+
+int key; //Å°º¸µå·Î ÀÔ·Â¹ÞÀº Å°°ªÀ» ÀúÀå 
+int new_block_on = 0; //»õ·Î¿î ºí·°ÀÌ ÇÊ¿äÇÔÀ» ¾Ë¸®´Â flag 
+int crush_on = 0; //ÇöÀç ÀÌµ¿ÁßÀÎ ºí·ÏÀÌ Ãæµ¹»óÅÂÀÎÁö ¾Ë·ÁÁÖ´Â flag 
+int level_up_on = 0; //´ÙÀ½·¹º§·Î ÁøÇà(ÇöÀç ·¹º§¸ñÇ¥°¡ ¿Ï·áµÇ¾úÀ½À») ¾Ë¸®´Â flag 
+int space_key_on = 0; //hard drop»óÅÂÀÓÀ» ¾Ë·ÁÁÖ´Â flag 
+
+
+
+int speed; //°ÔÀÓÁøÇà¼Óµµ 
+int level; //ÇöÀç level 
+int level_goal; //´ÙÀ½·¹º§·Î ³Ñ¾î°¡±â À§ÇÑ ¸ñÇ¥Á¡¼ö 
+int cnt; //ÇöÀç ·¹º§¿¡¼­ Á¦°ÅÇÑ ÁÙ ¼ö¸¦ ÀúÀå 
+int score; //ÇöÀç Á¡¼ö 
+int last_score = 0; //¸¶Áö¸·°ÔÀÓÁ¡¼ö 
+int best_score = 0; //ÃÖ°í°ÔÀÓÁ¡¼ö 
 
 void title_scene(void);
 void setting_scene(void);
@@ -159,33 +159,33 @@ void game_scene(void);
 void mode_select_scene(void);
 
 
-void reset_org(void); //main_org[][]ï¿½ï¿½ ï¿½Ê±ï¿½È­
-void reset_cpy(void); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(main_cpy[][]ï¿½ï¿½ ï¿½Ê±ï¿½È­)
+void reset_org(void); //main_org[][]¸¦ ÃÊ±âÈ­
+void reset_cpy(void); // °ÔÀÓÆÇ(main_cpy[][]¸¦ ÃÊ±âÈ­)
 
-//ï¿½Ü¼ï¿½Ã¢ draw/erase ï¿½Ô¼ï¿½
+//ÄÜ¼ÖÃ¢ draw/erase ÇÔ¼ö
 void draw_title_scene(int x, int y, TITLE_MENU menu);
 void draw_game_scene(void);
-void draw_map(int x, int y, int dx, int dy); // (x,y)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½.
-void draw_interface(int x, int y); // (x,y)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½âº»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
+void draw_map(int x, int y, int dx, int dy); // (x,y)¸¦ ±âÁØÀ¸·Î ¸ÊÀ» ±×¸².
+void draw_interface(int x, int y); // (x,y)¸¦ ±âÁØÀ¸·Î ±âº»ÀÎÅÍÆäÀÌ½º ±×¸®±â
 void erase_scene(int x, int y, int dx, int dy);
 void draw_block(int x, int y, int b_type, int b_rotation);
 
 char* key_string_set(int key);
 char* key_set(int key);
-// ï¿½ï¿½Æ®ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½
+// ½ºÆ®¸µ Å¸ÀÔÀ¸·Î º¯È¯ÇÏ´Â ÇÔ¼ö
 
 
 void draw_setting_scene_player(int x, int y, int player);
-void setting_scene_set(int x, int y, KEY_TYPE type, int player); // ï¿½É¼ï¿½ ï¿½Þ¾Æ¿ï¿½ï¿½ï¿½
+void setting_scene_set(int x, int y, KEY_TYPE type, int player); // ¿É¼Ç ¹Þ¾Æ¿À±â
 void draw_setting_scene(int x, int y, KEY_TYPE type, int player);
 
-int new_block();// ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ key ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-int check_key(void); // Å°ï¿½ï¿½ï¿½ï¿½ï¿½ Å° ï¿½Þ¾Æ¿ï¿½ï¿½ï¿½
-int check_is_upper(int key); // Å°ï¿½ï¿½ï¿½ï¿½ï¿½  ï¿½Þ¾Æ¿ï¿½ Å° ï¿½ë¹®ï¿½ï¿½ ï¿½Ë»ï¿½
-int check_is_rotatable(int* x, int* y); // È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ x,y ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+int new_block();// »õ·Î¿î ºí·ÏÀÇ key °¡Á®¿À±â
+int check_key(void); // Å°º¸µå·Î Å° ¹Þ¾Æ¿À±â
+int check_is_upper(int key); // Å°º¸µå·Î  ¹Þ¾Æ¿Â Å° ´ë¹®ÀÚ °Ë»ç
+int check_is_rotatable(int* x, int* y); // È¸Àü °¡´É ÇÏ´Ù¸é º¯°æµÈ x,y °ªÀ» ±âÁØÀ¸·Î º¯°æµÈ ÁÂÇ¥¸¦ ±âÁØÀ¸·Î Å×Æ®¸®½º ¹èÄ¡
 
 unsigned main_theme(void* arg);
-int bpm = 125; // 16ï¿½ï¿½ ï¿½ï¿½Ç¥ bpm
+int bpm = 125; // 16ºÐ À½Ç¥ bpm
 //1 bpm 16 2 bpm 8 4bpm 4
 
 
@@ -262,15 +262,15 @@ unsigned main_theme(void* arg) {
 
 
 
-void gotoxy(int x, int y) { //gotoxyï¿½Ô¼ï¿½ 
+void gotoxy(int x, int y) { //gotoxyÇÔ¼ö 
     COORD pos = { 2 * x,y };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
 
 
-typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE; //Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
-void setcursortype(CURSOR_TYPE c) { //Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ 
+typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE; //Ä¿¼­¼û±â´Â ÇÔ¼ö¿¡ »ç¿ëµÇ´Â ¿­°ÅÇü 
+void setcursortype(CURSOR_TYPE c) { //Ä¿¼­¼û±â´Â ÇÔ¼ö 
     CONSOLE_CURSOR_INFO CurInfo;
 
     switch (c) {
@@ -295,15 +295,12 @@ int main() {
     HANDLE hThrd;
     //main_theme(0);
     _beginthreadex(NULL, 0, main_theme, 0,0,NULL);
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
     int i;
-    srand((unsigned)time(NULL)); //ï¿½ï¿½ï¿½ï¿½Ç¥ï¿½ï¿½ï¿½ï¿½
-    setcursortype(NOCURSOR); //Ä¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    srand((unsigned)time(NULL)); //³­¼öÇ¥»ý¼º
+    setcursortype(NOCURSOR); //Ä¿¼­ ¾ø¾Ú
 
-    title_scene(); //ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½Æ² È£ï¿½ï¿½
+    title_scene(); //¸ÞÀÎÅ¸ÀÌÆ² È£Ãâ
 }
 
 void draw_title_scene(int x, int y, TITLE_MENU menu) {
@@ -327,43 +324,43 @@ void draw_title_scene(int x, int y, TITLE_MENU menu) {
 
 
 void title_scene(void) {
-    int x = 5; //Å¸ï¿½ï¿½Æ²È­ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇ´ï¿½ xï¿½ï¿½Ç¥
-    int y = 4; //Å¸ï¿½ï¿½Æ²È­ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇ´ï¿½ yï¿½ï¿½Ç¥
-    int cnt; //Å¸ï¿½ï¿½Æ² ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    int x = 5; //Å¸ÀÌÆ²È­¸éÀÌ Ç¥½ÃµÇ´Â xÁÂÇ¥
+    int y = 4; //Å¸ÀÌÆ²È­¸éÀÌ Ç¥½ÃµÇ´Â yÁÂÇ¥
+    int cnt; //Å¸ÀÌÆ² ÇÁ·¹ÀÓÀ» ¼¼´Â º¯¼ö
     TITLE_MENU menu = GAME_START;
 
     key = 0;
 
-    gotoxy(x, y + 0); printf("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"); Sleep(100);
-    gotoxy(x, y + 1); printf("ï¿½ï¿½ï¿½ï¿½ï¿½  ï¿½ï¿½ï¿½ï¿½    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"); Sleep(100);
-    gotoxy(x, y + 2); printf("ï¿½ï¿½ï¿½ï¿½ï¿½              ï¿½ï¿½ï¿½  ï¿½ï¿½"); Sleep(100);
-    gotoxy(x, y + 3); printf("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  ï¿½ï¿½  ï¿½ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"); Sleep(100);
-    gotoxy(x, y + 4); printf("ï¿½ï¿½ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"); Sleep(100);
+    gotoxy(x, y + 0); printf("¡á¡à¡à¡à¡á¡á¡á¡à¡à¡á¡á¡à¡à¡á¡á"); Sleep(100);
+    gotoxy(x, y + 1); printf("¡á¡á¡á¡à  ¡á¡à¡à    ¡á¡á¡à¡à¡á"); Sleep(100);
+    gotoxy(x, y + 2); printf("¡à¡à¡à¡á              ¡à¡á  ¡á"); Sleep(100);
+    gotoxy(x, y + 3); printf("¡á¡á¡à¡á¡á  ¡à  ¡á  ¡à¡à¡á¡à¡à"); Sleep(100);
+    gotoxy(x, y + 4); printf("¡á¡á  ¡á¡à¡à¡à¡á¡á¡á¡à¡á¡á¡à¡à"); Sleep(100);
     gotoxy(x + 5, y + 2); printf("T E T R I S"); Sleep(100);
     gotoxy(x, y + 6); printf(" Press Enter ");
     draw_title_scene(x, y, menu);
 
-    for (cnt = 0;; cnt++) { //cntï¿½ï¿½ 1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å°ï¿½é¼­ ï¿½ï¿½ï¿½ ï¿½Ýºï¿½    //ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ß¿ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Â¦ï¿½Ì´ï¿½ ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½È¿ï¿½ï¿½
+    for (cnt = 0;; cnt++) { //cnt¸¦ 1¾¿ Áõ°¡½ÃÅ°¸é¼­ °è¼Ó ¹Ýº¹    //ÇÏ³ªµµ ¾ÈÁß¿äÇÑ º° ¹ÝÂ¦ÀÌ´Â ¾Ö´Ï¸ÞÀÌ¼ÇÈ¿°ú
         if (_kbhit()) {
             key = _getch();
             if (key == ENTER) break;
             if (key == 224) {
-                do { key = _getch(); } while (key == 224);//ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                do { key = _getch(); } while (key == 224);//¹æÇâÅ°Áö½Ã°ªÀ» ¹ö¸²
                 switch (key) {
-                case DOWN: //ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½
+                case DOWN: //¾Æ·¡ÂÊ ¹æÇâÅ° ´­·¶À»¶§-À§¿Í µ¿ÀÏÇÏ°Ô Ã³¸®µÊ
                     menu = (menu + 1) % 3;
                     draw_title_scene(x, y, menu);
                     break;
-                case UP: //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                case UP: //À§ÂÊ ¹æÇâÅ° ´­·¶À»¶§
                     menu = (menu + 2) % 3;
                     draw_title_scene(x, y, menu);
                 }
             }
             while (_kbhit()) _getch();
         }
-        if (cnt % 200 == 0) { gotoxy(x + 4, y + 1); printf("ï¿½ï¿½"); }       //cntï¿½ï¿½ 200ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
-        if ((cnt % 200 - 100) == 0) { gotoxy(x + 4, y + 1); printf("  "); } //ï¿½ï¿½ Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ 100Ä«ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-        if ((cnt % 350) == 0) { gotoxy(x + 13, y + 2); printf("ï¿½ï¿½"); } //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        if (cnt % 200 == 0) { gotoxy(x + 4, y + 1); printf("¡Ú"); }       //cnt°¡ 200À¸·Î ³ª´©¾î ¶³¾îÁú¶§ º°À» Ç¥½Ã
+        if ((cnt % 200 - 100) == 0) { gotoxy(x + 4, y + 1); printf("  "); } //À§ Ä«¿îÆ®¿¡¼­ 100Ä«¿îÆ® °£°ÝÀ¸·Î º°À» Áö¿ò
+        if ((cnt % 350) == 0) { gotoxy(x + 13, y + 2); printf("¡Ù"); } //À­º°°ú °°Áö¸¸ ½Ã°£Â÷¸¦ µ×À½
         if ((cnt % 350 - 100) == 0) { gotoxy(x + 13, y + 2); printf("  "); }
         Sleep(10);
     }
@@ -386,8 +383,8 @@ void title_scene(void) {
 
 
 void setting_scene() {
-    int x = 5; //Å¸ï¿½ï¿½Æ²È­ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇ´ï¿½ xï¿½ï¿½Ç¥
-    int y = 3; //Å¸ï¿½ï¿½Æ²È­ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ÃµÇ´ï¿½ yï¿½ï¿½Ç¥
+    int x = 5; //Å¸ÀÌÆ²È­¸éÀÌ Ç¥½ÃµÇ´Â xÁÂÇ¥
+    int y = 3; //Å¸ÀÌÆ²È­¸éÀÌ Ç¥½ÃµÇ´Â yÁÂÇ¥
     KEY_TYPE key = LEFT_KEY;
     int player = P1;
     draw_setting_scene_player(x, y, player);
@@ -407,14 +404,14 @@ void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
             }
             if (key == ENTER) break;
             if (key == 224) {
-                do { key = _getch(); } while (key == 224);//ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                do { key = _getch(); } while (key == 224);//¹æÇâÅ°Áö½Ã°ªÀ» ¹ö¸²
                 switch (key) {
-                case DOWN: //ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½
+                case DOWN: //¾Æ·¡ÂÊ ¹æÇâÅ° ´­·¶À»¶§-À§¿Í µ¿ÀÏÇÏ°Ô Ã³¸®µÊ
                     type = (type + 1) % 7;
                     while (_kbhit()) _getch();
                     draw_setting_scene(x, y, type);
                     break;
-                case UP: //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                case UP: //À§ÂÊ ¹æÇâÅ° ´­·¶À»¶§
                     type = (type + 6) % 7;
                     while (_kbhit()) _getch();
                     draw_setting_scene(x, y, type);
@@ -432,50 +429,50 @@ void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
     }
     switch (type) {
     case LEFT_KEY:
-        gotoxy(x, y + 6); printf("ï¿½ï¿½  %s    LEFT     :     %6s  %s   ï¿½ï¿½", " ->", key_set(left_key), " <-");
+        gotoxy(x, y + 6); printf("¢Ç  %s    LEFT     :     %6s  %s   ¢Ç", " ->", key_set(left_key), " <-");
         setting_new_key(x, y, left_key, type, player);
         break;
     case RIGHT_KEY:
-        gotoxy(x, y + 7); printf("ï¿½ï¿½  %s   RIGHT     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 7); printf("¢Ç  %s   RIGHT     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
         break;
     case DOWN_KEY:
-        gotoxy(x, y + 8); printf("ï¿½ï¿½  %s    DOWN     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 8); printf("¢Ç  %s    DOWN     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
         break;
     case HARD_DROP_KEY:
-        gotoxy(x, y + 9); printf("ï¿½ï¿½  %s HARD DROP   :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 9); printf("¢Ç  %s HARD DROP   :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_KEY:
-        gotoxy(x, y + 10); printf("ï¿½ï¿½  %s    È¸ï¿½ï¿½     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 10); printf("¢Ç  %s    È¸Àü     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_COUNTER_KEY:
-        gotoxy(x, y + 11); printf("ï¿½ï¿½  %sï¿½Ý½Ã°ï¿½ È¸ï¿½ï¿½  :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 11); printf("¢Ç  %s¹Ý½Ã°è È¸Àü  :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
         break;
     case HOLD_KEY:
-        gotoxy(x, y + 12); printf("ï¿½ï¿½  %s    HOLD     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 12); printf("¢Ç  %s    HOLD     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
         break;
     }
 }
 
 void draw_setting_scene_player(int x, int y, int player) {
     if (player == P1) {
-        gotoxy(x, y + 0); printf("ï¿½Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢ï¿½");
-        gotoxy(x, y + 1); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-        gotoxy(x, y + 2); printf("ï¿½ï¿½      +-----------------------+       ï¿½ï¿½");
-        gotoxy(x, y + 3); printf("ï¿½ï¿½      |   S E T T I N G - P1  |       ï¿½ï¿½");
-        gotoxy(x, y + 4); printf("ï¿½ï¿½      +-----------------------+       ï¿½ï¿½");
-        gotoxy(x, y + 5); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-        gotoxy(x, y + 15); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-        gotoxy(x, y + 16); printf("ï¿½Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢ï¿½");
+        gotoxy(x, y + 0); printf("¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç");
+        gotoxy(x, y + 1); printf("¢Ç                                      ¢Ç");
+        gotoxy(x, y + 2); printf("¢Ç      +-----------------------+       ¢Ç");
+        gotoxy(x, y + 3); printf("¢Ç      |   S E T T I N G - P1  |       ¢Ç");
+        gotoxy(x, y + 4); printf("¢Ç      +-----------------------+       ¢Ç");
+        gotoxy(x, y + 5); printf("¢Ç                                      ¢Ç");
+        gotoxy(x, y + 15); printf("¢Ç                                      ¢Ç");
+        gotoxy(x, y + 16); printf("¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç");
     }
     if (player == P2) {
-        gotoxy(x, y + 0); printf("ï¿½Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢ï¿½");
-        gotoxy(x, y + 1); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-        gotoxy(x, y + 2); printf("ï¿½ï¿½      +-----------------------+       ï¿½ï¿½");
-        gotoxy(x, y + 3); printf("ï¿½ï¿½      |   S E T T I N G - P2  |       ï¿½ï¿½");
-        gotoxy(x, y + 4); printf("ï¿½ï¿½      +-----------------------+       ï¿½ï¿½");
-        gotoxy(x, y + 5); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-        gotoxy(x, y + 15); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-        gotoxy(x, y + 16); printf("ï¿½Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢ï¿½");
+        gotoxy(x, y + 0); printf("¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç");
+        gotoxy(x, y + 1); printf("¢Ç                                      ¢Ç");
+        gotoxy(x, y + 2); printf("¢Ç      +-----------------------+       ¢Ç");
+        gotoxy(x, y + 3); printf("¢Ç      |   S E T T I N G - P2  |       ¢Ç");
+        gotoxy(x, y + 4); printf("¢Ç      +-----------------------+       ¢Ç");
+        gotoxy(x, y + 5); printf("¢Ç                                      ¢Ç");
+        gotoxy(x, y + 15); printf("¢Ç                                      ¢Ç");
+        gotoxy(x, y + 16); printf("¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç¢Ç");
     }
 }
 
@@ -485,7 +482,7 @@ void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, int player) {
             key = _getch();
             
             if (key == 224) {
-                do { key = _getch(); } while (key == 224);//ï¿½ï¿½ï¿½ï¿½Å°ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                do { key = _getch(); } while (key == 224);//¹æÇâÅ°Áö½Ã°ªÀ» ¹ö¸²
                 key_set = 180 + DOWN;
                 setting_key_setting(x, y, type);
             }
@@ -536,38 +533,38 @@ char* key_string_set(int key) {
 }
 
 void draw_setting_scene(int x, int y, KEY_TYPE type,int player) {
-    gotoxy(x, y + 6); printf("ï¿½ï¿½  %s    LEFT     :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(left_key), CURSOR_OFF);
-    gotoxy(x, y + 7); printf("ï¿½ï¿½  %s   RIGHT     :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(right_key), CURSOR_OFF);
-    gotoxy(x, y + 8); printf("ï¿½ï¿½  %s    DOWN     :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(down_key), CURSOR_OFF);
-    gotoxy(x, y + 9); printf("ï¿½ï¿½  %s HARD DROP   :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(hard_drop_key), CURSOR_OFF);
-    gotoxy(x, y + 10); printf("ï¿½ï¿½  %s    È¸ï¿½ï¿½     :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(rotate_key), CURSOR_OFF);
-    gotoxy(x, y + 11); printf("ï¿½ï¿½  %sï¿½Ý½Ã°ï¿½ È¸ï¿½ï¿½  :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(rotate_counter_key), CURSOR_OFF);
-    gotoxy(x, y + 12); printf("ï¿½ï¿½  %s    HOLD     :     %6s  %s   ï¿½ï¿½", CURSOR_OFF, key_set(hold_key), CURSOR_OFF);
-    gotoxy(x, y + 13); printf("ï¿½ï¿½                                      ï¿½ï¿½");
-    gotoxy(x, y + 14); printf("ï¿½ï¿½      PRESS ESC TO BACK TO MAIN       ï¿½ï¿½");
+    gotoxy(x, y + 6); printf("¢Ç  %s    LEFT     :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(left_key), CURSOR_OFF);
+    gotoxy(x, y + 7); printf("¢Ç  %s   RIGHT     :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(right_key), CURSOR_OFF);
+    gotoxy(x, y + 8); printf("¢Ç  %s    DOWN     :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(down_key), CURSOR_OFF);
+    gotoxy(x, y + 9); printf("¢Ç  %s HARD DROP   :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(hard_drop_key), CURSOR_OFF);
+    gotoxy(x, y + 10); printf("¢Ç  %s    È¸Àü     :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(rotate_key), CURSOR_OFF);
+    gotoxy(x, y + 11); printf("¢Ç  %s¹Ý½Ã°è È¸Àü  :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(rotate_counter_key), CURSOR_OFF);
+    gotoxy(x, y + 12); printf("¢Ç  %s    HOLD     :     %6s  %s   ¢Ç", CURSOR_OFF, key_set(hold_key), CURSOR_OFF);
+    gotoxy(x, y + 13); printf("¢Ç                                      ¢Ç");
+    gotoxy(x, y + 14); printf("¢Ç      PRESS ESC TO BACK TO MAIN       ¢Ç");
 
 
     switch (type) {
     case LEFT_KEY:
-        gotoxy(x, y + 6); printf("ï¿½ï¿½  %s    LEFT     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(left_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 6); printf("¢Ç  %s    LEFT     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(left_key), CURSOR_ON_RIGHT);
         break;
     case RIGHT_KEY:
-        gotoxy(x, y + 7); printf("ï¿½ï¿½  %s   RIGHT     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 7); printf("¢Ç  %s   RIGHT     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(right_key), CURSOR_ON_RIGHT);
         break;
     case DOWN_KEY:
-        gotoxy(x, y + 8); printf("ï¿½ï¿½  %s    DOWN     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 8); printf("¢Ç  %s    DOWN     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(down_key), CURSOR_ON_RIGHT);
         break;
     case HARD_DROP_KEY:
-        gotoxy(x, y + 9); printf("ï¿½ï¿½  %s HARD DROP   :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 9); printf("¢Ç  %s HARD DROP   :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(hard_drop_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_KEY:
-        gotoxy(x, y + 10); printf("ï¿½ï¿½  %s    È¸ï¿½ï¿½     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 10); printf("¢Ç  %s    È¸Àü     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(rotate_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_COUNTER_KEY:
-        gotoxy(x, y + 11); printf("ï¿½ï¿½  %sï¿½Ý½Ã°ï¿½ È¸ï¿½ï¿½  :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 11); printf("¢Ç  %s¹Ý½Ã°è È¸Àü  :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(rotate_counter_key), CURSOR_ON_RIGHT);
         break;
     case HOLD_KEY:
-        gotoxy(x, y + 12); printf("ï¿½ï¿½  %s    HOLD     :     %6s  %s   ï¿½ï¿½", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 12); printf("¢Ç  %s    HOLD     :     %6s  %s   ¢Ç", CURSOR_ON_LEFT, key_set(hold_key), CURSOR_ON_RIGHT);
         break;
 
     }
