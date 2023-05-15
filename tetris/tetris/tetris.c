@@ -409,7 +409,7 @@ void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
                 case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
                     type = (type + 1) % 7;
                     while (_kbhit()) _getch();
-                    draw_setting_scene(x, y, type);
+                    draw_setting_scene(x, y, type,player);
                     break;
                 case UP: //위쪽 방향키 눌렀을때
                     type = (type + 6) % 7;
