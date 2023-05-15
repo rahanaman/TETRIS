@@ -126,10 +126,10 @@ int wall_kick_data[2][4][2][5][2] = {
 //dx는 더하고, dy는 빼야함 주요요요요용
 
 
-int b_type[7] = { 0,1,2,3,4,5,6 }; // 테트리스 가방 정렬
-int b_rotation; // 블록 회전값 저장 
-int b_now; // 현재 인덱스 저장 
-int bx, by; // 이동중인 블록의 게임판상의 x,y좌표를 저장 
+int b_type[2][2][7] = { { { 0,1,2,3,4,5,6 } ,{ 0,1,2,3,4,5,6 } } ,{ { 0,1,2,3,4,5,6 } ,{ 0,1,2,3,4,5,6 } } }; // 테트리스 가방 정렬
+int b_rotation[2]; // 블록 회전값 저장 
+int b_now[2]; // 현재 인덱스 저장 
+int bx[2], by[2]; // 이동중인 블록의 게임판상의 x,y좌표를 저장 
 
 
 int main_org[2][XY_MAX][XY_MAX]; //게임판의 정보를 저장하는 배열 모니터에 표시후에 main_cpy로 복사됨 
@@ -157,31 +157,49 @@ int last_score = 0; //마지막게임점수
 int best_score = 0; //최고게임점수 
 
 void title_scene(void);
-void setting_scene(void);
-void game_scene(void);
+void draw_title_scene(int x, int y, TITLE_MENU menu);
+
+
 void mode_select_scene(void);
 
 
-void reset_org_cpy(int** org, int** cpy int dx, int dy); //main_org[][]를 초기화, dx, dy만큼
-void reset_cpy(void); // 게임판(main_cpy[][]를 초기화)
 
 //콘솔창 draw/erase 함수
-void draw_title_scene(int x, int y, TITLE_MENU menu);
+
 void draw_game_scene(void);
-void draw_map(int x, int y, int dx, int dy); // (x,y)를 기준으로 맵을 그림.
 void draw_interface(int x, int y); // (x,y)를 기준으로 기본인터페이스 그리기
 void erase_scene(int x, int y, int dx, int dy);
-void draw_block(int x, int y, int b_type, int b_rotation);
+void draw_block(int x, int y, int type, int rotation);
 
 char* key_string_set(int key);
 char* key_set(int key);
 // 스트링 타입으로 변환하는 함수
 
-
+void setting_scene(void);
 void draw_setting_scene_player(int x, int y, int player);
 void setting_scene_set(int x, int y, KEY_TYPE type, int player); // 옵션 받아오기
 void draw_setting_scene(int x, int y, KEY_TYPE type, int player);
 void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, int player);
+
+void reset_org_cpy(int player, int dx, int dy); //main_org[][]를 초기화, dx, dy만큼
+void save_org_cpy(int player, int dx, int dy); // 게임판(main_cpy[][]를 초기화)
+void shuffle_block(int player);
+/*셔플 루틴
+* b_now++ 하고
+* b_now = 7일 경우 
+*배열1 다 사용하면
+*배열 2 -> 배열1로 복사
+*배열2 재셔플
+*초기 셔플 -> 두 번 수행해야함
+* b_now =0으로 바꾸기
+*/
+
+
+void game_2p_battle_scene(void);
+void draw_game_2p_battle_scene(void);
+void draw_next(int x, int y, int player);
+void draw_map(int x, int y, int player, int dx, int dy);
+
 
 
 int new_block();// 새로운 블록의 key 가져오기
@@ -373,6 +391,7 @@ void title_scene(void) {
     switch (menu) {
     case GAME_START:
         system("cls");
+        game_2p_battle_scene(); // 나중에 모드로 수정예정
         break;
     case KEY_SETTING:
         system("cls");
@@ -386,7 +405,7 @@ void title_scene(void) {
 
 }
 
-
+//수정예정 - 세팅 키 입력 덜 작성함
 void setting_scene() {
     int x = 5; //타이틀화면이 표시되는 x좌표
     int y = 3; //타이틀화면이 표시되는 y좌표
@@ -570,42 +589,148 @@ void draw_setting_scene(int x, int y, KEY_TYPE type,int player) {
     }
 }
 
-void reset_org_cpy(int** org, int** cpy, int dx, int dy) {
+//수정예정 - 세팅 키 입력 덜 작성함
+
+
+void reset_org_cpy(int player, int dx, int dy) {
     int i, j;
-    for (i = 0; i < dx; ++i) {
-        for (j = 0; j < dy; ++j) {
-            org[i][j] = 0;
+    for (i = 0; i < dy; ++i) {
+        for (j = 0; j < dx; ++j) {
+            main_org[player][i][j] = EMPTY;
+            main_cpy[player][i][j] = 100;
+        }
+    }
+    for (j = 0; j < dx; ++j) {
+        main_org[player][3][j] = CEILLING;
+    }
+    for (i = 1; i < dy - 1; i++) { //좌우 벽을 만듦  
+        main_org[player][i][0] = WALL;
+        main_org[player][i][dx-1] = WALL;
+    }
+    for (j = 0; j < dx; ++j) { //바닥벽을 만듦 
+        main_org[player][dy-1][j] = WALL;
+    }
+}
+
+
+
+void save_org_cpy(int player , int dx, int dy) {
+    for (int i = 0; i < dx; i++) { //게임판을 그린 후 main_cpy에 복사  
+        for (int j = 0; j < dy; j++) {
+            main_cpy[player][i][j] = main_org[player][i][j];
         }
     }
 }
 
-void reset_main(void) { //게임판을 초기화  
-    int i, j;
+void shuffle_block(int player)
+{
 
-    for (i = 0; i < MAIN_Y_1; i++) { // 게임판을 0으로 초기화  
-        for (j = 0; j < MAIN_X_1; j++) {
-            main_org[0][i][j] = 0;
-            main_cpy[0][i][j] = 100;
+    for (int i = 0; i < 7; ++i) {
+        b_type[player][0][i] = b_type[player][1][i];
+    }
+    int n, temp;
+    for(int i = 0; i < 6; ++i) {
+        n = rand() % (7 - i) + i;    // i 부터 num-1 사이에 임의의 정수 생성
+        temp =b_type[player][1][i];
+        b_type[player][1][i] = b_type[player][1][n];
+        b_type[player][1][n] = temp;
+    }
+    
+}
+
+
+void game_2p_battle_scene(void) {
+    //리셋 시작
+    b_now[P1] = 0;
+    b_now[P2] = 0;
+    reset_org_cpy(P1,MAIN_X_1,MAIN_Y_1);
+    reset_org_cpy(P2,MAIN_X_1,MAIN_Y_1);
+    shuffle_block(P1);
+    shuffle_block(P1);
+    shuffle_block(P2);
+    shuffle_block(P2);
+    //리셋 끝
+    draw_game_2p_battle_scene();
+}
+
+void draw_game_2p_battle_scene(void) {
+    int x = 3, y = 1;
+    draw_map(x,y,P1, MAIN_X_1, MAIN_Y_1);
+    draw_next(x+MAIN_X_1+1,y+2,P1, MAIN_X_1, MAIN_Y_1);
+    draw_map(x+MAIN_X_1+10+x , y, P2, MAIN_X_1, MAIN_Y_1);
+    draw_next(2*x + 2*MAIN_X_1 + 11, y + 2, P2, MAIN_X_1, MAIN_Y_1);
+}
+
+void draw_block(int x, int y, int type, int rotation) {
+
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            if (blocks[type][rotation][i][j] == 1) {
+                gotoxy(x + j, y + i); printf("■");
+            }
         }
-    }
-    for (j = 1; j < MAIN_X_1; j++) { //y값이 3인 위치에 천장을 만듦 
-        main_org[0][3][j] = CEILLING;
-    }
-    for (i = 1; i < MAIN_Y_1 - 1; i++) { //좌우 벽을 만듦  
-        main_org[0][i][0] = WALL;
-        main_org[0][i][MAIN_X_1 - 1] = WALL;
-    }
-    for (j = 0; j < MAIN_X_1; j++) { //바닥벽을 만듦 
-        main_org[0][MAIN_Y_1 - 1][j] = WALL;
     }
 }
 
-void reset_main_cpy(int dx, int dy) { // X, Y 크기 받아야함.
+void draw_next(int x, int y, int player) {
+    gotoxy(x, y ); printf("+-  N E X T  -+ ");
+    gotoxy(x, y + 1); printf("|             | ");
+    gotoxy(x, y + 2); printf("|             | ");
+    gotoxy(x, y + 3); printf("+-- -  -  - --+ ");
+    gotoxy(x, y + 4); printf("+-  N E X T  -+ ");
+    gotoxy(x, y + 5); printf("|             | ");
+    gotoxy(x, y + 6); printf("|             | ");
+    gotoxy(x, y + 7); printf("+-- -  -  - --+ ");
+    gotoxy(x, y + 8); printf("+-  N E X T  -+ ");
+    gotoxy(x, y + 9); printf("|             | ");
+    gotoxy(x, y + 10); printf("|             | ");
+    gotoxy(x, y + 11); printf("+-- -  -  - --+ ");
+    gotoxy(x, y + 12); printf("+-  N E X T  -+ ");
+    gotoxy(x, y + 13); printf("|             | ");
+    gotoxy(x, y + 14); printf("|             | ");
+    gotoxy(x, y + 15); printf("+-- -  -  - --+ ");
+    gotoxy(x, y + 16); printf("+-  N E X T  -+ ");
+    gotoxy(x, y + 17); printf("|             | ");
+    gotoxy(x, y + 18); printf("|             | ");
+    gotoxy(x, y + 19); printf("+-- -  -  - --+ ");
+    draw_block(x + 2, y + 1, *((*b_type[player]) + b_now[player] + 1), 0);
+    draw_block(x + 2, y + 5, *((*b_type[player]) + b_now[player] + 2), 0);
+    draw_block(x + 2, y + 9, *((*b_type[player]) + b_now[player] + 3), 0);
+    draw_block(x + 2, y + 13, *((*b_type[player]) + b_now[player] + 4), 0);
+    draw_block(x + 2, y + 17, *((*b_type[player]) + b_now[player] + 5), 0);
+}
+
+void draw_map(int x, int y,int player, int dx, int dy) {
     int i, j;
 
-    for (i = 0; i < MAIN_Y; i++) {         //게임판에 게임에 사용되지 않는 숫자를 넣음 
-        for (j = 0; j < MAIN_X; j++) {  //이는 main_org와 같은 숫자가 없게 하기 위함 
-            main_cpy[i][j] = 100;
+    for (j = 1; j < dx - 1; j++) { //천장은 계속 새로운블럭이 지나가서 지워지면 새로 그려줌 
+        if (main_org[player][3][j] == EMPTY)  main_org[player][3][j] = CEILLING;
+    }
+    for (i = 0; i < dy; i++) {
+        for (j = 0; j < dx; j++) {
+            if (main_cpy[player][i][j] != main_org[player][i][j]){ //cpy랑 비교해서 값이 달라진 부분만 새로 그려줌.
+                //이게 없으면 게임판전체를 계속 그려서 느려지고 반짝거림
+                gotoxy(x + j, y + i);
+                switch (main_org[player][i][j]) {
+                case EMPTY: //빈칸모양 
+                    printf("  ");
+                    break;
+                case CEILLING: //천장모양 
+                    printf(". ");
+                    break;
+                case WALL: //벽모양 
+                    printf("▩");
+                    break;
+                case INACTIVE_BLOCK: //굳은 블럭 모양  
+                    printf("□");
+                    break;
+                case ACTIVE_BLOCK: //움직이고있는 블럭 모양  
+                    printf("■");
+                    break;
+                }
+            }
         }
     }
+    save_org_cpy(player, dx, dy);
+
 }
