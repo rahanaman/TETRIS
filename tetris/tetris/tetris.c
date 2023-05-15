@@ -38,6 +38,9 @@
 #define P1 0
 #define P2 1
 
+#define MAIN_X_1 11
+#define MAIN_Y_1 23
+
 
 #define ACTIVE_BLOCK -2 // 게임판배열에 저장될 블록의 상태들 
 #define CEILLING -1     // 블록이 이동할 수 있는 공간은 0 또는 음의 정수료 표현 
@@ -159,7 +162,7 @@ void game_scene(void);
 void mode_select_scene(void);
 
 
-void reset_org(void); //main_org[][]를 초기화
+void reset_org_cpy(int** org, int** cpy int dx, int dy); //main_org[][]를 초기화, dx, dy만큼
 void reset_cpy(void); // 게임판(main_cpy[][]를 초기화)
 
 //콘솔창 draw/erase 함수
@@ -391,8 +394,6 @@ void setting_scene() {
     int player = P1;
     draw_setting_scene_player(x, y, player);
     setting_scene_set(x, y, key,player);
-
-
 }
 
 void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
@@ -487,17 +488,13 @@ void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, int player) {
             if (key == 224) {
                 do { key = _getch(); } while (key == 224);//방향키지시값을 버림
                 key_set = 180 + DOWN;
-                setting_key_setting(x, y, type,player);
+                draw_setting_scene(x, y, type,player);
             }
 
             while (_kbhit()) _getch();
         }
     }
-    //gotoxy(x+14, y); printf("S");
-    //gotoxy(x+13, y); printf("ERROR");
 }
-
-
 
 char* key_set(int key) {
     if (key > 128) {
@@ -573,3 +570,42 @@ void draw_setting_scene(int x, int y, KEY_TYPE type,int player) {
     }
 }
 
+void reset_org_cpy(int** org, int** cpy, int dx, int dy) {
+    int i, j;
+    for (i = 0; i < dx; ++i) {
+        for (j = 0; j < dy; ++j) {
+            org[i][j] = 0;
+        }
+    }
+}
+
+void reset_main(void) { //게임판을 초기화  
+    int i, j;
+
+    for (i = 0; i < MAIN_Y_1; i++) { // 게임판을 0으로 초기화  
+        for (j = 0; j < MAIN_X_1; j++) {
+            main_org[0][i][j] = 0;
+            main_cpy[0][i][j] = 100;
+        }
+    }
+    for (j = 1; j < MAIN_X_1; j++) { //y값이 3인 위치에 천장을 만듦 
+        main_org[0][3][j] = CEILLING;
+    }
+    for (i = 1; i < MAIN_Y_1 - 1; i++) { //좌우 벽을 만듦  
+        main_org[0][i][0] = WALL;
+        main_org[0][i][MAIN_X_1 - 1] = WALL;
+    }
+    for (j = 0; j < MAIN_X_1; j++) { //바닥벽을 만듦 
+        main_org[0][MAIN_Y_1 - 1][j] = WALL;
+    }
+}
+
+void reset_main_cpy(int dx, int dy) { // X, Y 크기 받아야함.
+    int i, j;
+
+    for (i = 0; i < MAIN_Y; i++) {         //게임판에 게임에 사용되지 않는 숫자를 넣음 
+        for (j = 0; j < MAIN_X; j++) {  //이는 main_org와 같은 숫자가 없게 하기 위함 
+            main_cpy[i][j] = 100;
+        }
+    }
+}
