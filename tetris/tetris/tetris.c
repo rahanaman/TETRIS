@@ -185,11 +185,7 @@ int check_is_upper(int key); // 키보드로  받아온 키 대문자 검사
 int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
 
 unsigned main_theme(void* arg);
-<<<<<<< Updated upstream
 int bpm = 125; // 16분 음표 bpm
-=======
-int bpm = 135; // 16분 음표 bpm
->>>>>>> Stashed changes
 //1 bpm 16 2 bpm 8 4bpm 4
 
 
@@ -296,11 +292,10 @@ void setcursortype(CURSOR_TYPE c) { //커서숨기는 함수
 
 
 int main() {
+    HANDLE hThrd;
+    //main_theme(0);
     _beginthreadex(NULL, 0, main_theme, 0,0,NULL);
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
     int i;
     srand((unsigned)time(NULL)); //난수표생성
     setcursortype(NOCURSOR); //커서 없앰
