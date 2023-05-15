@@ -7,6 +7,7 @@
 #include<stdlib.h>
 #include <string.h>
 
+DWORD WINAPI ThreadFunc(LPVOID);
 
 /// 키보드 값들
 #define LEFT 75 // 좌측 화살표
@@ -34,15 +35,7 @@
 #define false 0
 #define true 1
 
-int left_key[2] = { 224,LEFT };
-int right_key[2] = { 224, RIGHT };
-int down_key[2] = { 224, DOWN };
-int hard_drop_key[2] = { ' ', };
-int rotate_key[2] = { 'X', };
-int rotate_counter_key[2] = { 'Z', };
-int hold_key[2] = { 'C', };
-int pause_key[2] = { 'P', };
-int esc_key[2] = { ESC, };
+
 
 #define ACTIVE_BLOCK -2 // 게임판배열에 저장될 블록의 상태들 
 #define CEILLING -1     // 블록이 이동할 수 있는 공간은 0 또는 음의 정수료 표현 
@@ -64,7 +57,15 @@ int STATUS_Y_LEVEL; //LEVEL 정보표시위치Y 좌표 저장
 int STATUS_Y_SCORE; //SCORE 정보표시위치Y 좌표 저장
 */
 
-
+int left_key = 128 + LEFT;
+int right_key = 128 + RIGHT;
+int down_key = 128 + DOWN;
+int hard_drop_key = ' ';
+int rotate_key = 'X';
+int rotate_counter_key = 'Z';
+int hold_key = 'C';
+int pause_key = 'P';
+int esc_key = ESC;
 
 int blocks[7][4][4][4] = {
 {{0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0},{0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0},
@@ -170,8 +171,8 @@ void draw_interface(int x, int y); // (x,y)를 기준으로 기본인터페이스 그리기
 void erase_scene(int x, int y, int dx, int dy);
 void draw_block(int x, int y, int b_type, int b_rotation);
 
-char* key_string_set(char key);
-char* key_set(int* key);
+char* key_string_set(int key);
+char* key_set(int key);
 // 스트링 타입으로 변환하는 함수
 
 void setting_set(int x, int y, KEY_TYPE type);
@@ -184,6 +185,82 @@ int new_block();// 새로운 블록의 key 가져오기
 int check_key(void); // 키보드로 키 받아오기
 int check_is_upper(int key); // 키보드로  받아온 키 대문자 검사
 int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
+
+unsigned main_theme(void* arg);
+int bpm = 200; // 16분 음표 bpm
+//1 bpm 16 2 bpm 8 4bpm 4
+
+
+unsigned main_theme(void* arg) {
+    while (1) {
+        Beep(1318.5100f, 4 * bpm);
+        Beep(987.7666f, 2 * bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(1174.6590f, 2 * bpm);
+        Beep(1318.5100f, bpm);
+        Beep(1174.6590f, bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(987.7666f, 2 * bpm);
+        Beep(880.0000f, 4 * bpm);
+        Beep(880.0000f, 2 * bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(1318.5100f, 4 * bpm);
+        Beep(1174.6590f, 2 * bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(987.7666f, 4 * bpm);
+        Beep(987.7666f, bpm);
+        Beep(987.7666f, bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(1174.6590f, 4 * bpm);
+        Beep(1318.5100f, 4 * bpm);
+        Beep(1046.5020f, 4 * bpm);
+        Beep(880.0000f, 4 * bpm);
+        Beep(880.0000f, 6 * bpm);
+
+        Beep(1174.6590f, 4 * bpm);
+        Beep(1174.6590f, 2 * bpm);
+        Beep(1396.9130f, 2 * bpm);
+        Beep(1760.0000f, 4 * bpm);
+        Beep(1567.9820f, 2 * bpm);
+        Beep(1396.9130f, 2 * bpm);
+        Beep(1318.5100f, 4 * bpm);
+        Beep(1318.5100f, 2 * bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(1318.5100f, 4 * bpm);
+        Beep(1174.6590f, 2 * bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(987.7666f, 4 * bpm);
+        Beep(987.7666f, 2*bpm);
+        Beep(1046.5020f, 2 * bpm);
+        Beep(1174.6590f, 4 * bpm);
+        Beep(1318.5100f, 4 * bpm);
+        Beep(1046.5020f, 4 * bpm);
+        Beep(880.0000f, 4 * bpm);
+        Beep(880.0000f, 6 * bpm);
+
+        Beep(1318.5100f, 6 * bpm);
+        Beep(1046.5020f, 6 * bpm);
+        Beep(1174.6590f, 6 * bpm);
+        Beep(987.7666f, 6 * bpm);
+        Beep(1046.5020f, 6 * bpm);
+        Beep(880.0000f, 6 * bpm);
+        Beep(830.6100f, 6 * bpm);
+        Beep(987.7666f, 6 * bpm);
+        Beep(1318.5100f, 6 * bpm);
+        Beep(1046.5020f, 6 * bpm);
+        Beep(1174.6590f, 6 * bpm);
+        Beep(987.7666f, 6 * bpm);
+        Beep(1046.5020f, 4 * bpm);
+        Beep(1318.5100f, 4 * bpm);
+        Beep(1760.0000f, 4 * bpm);
+        Beep(1760.0000f, 4 * bpm);
+        Beep(1661.2200f, 6 * bpm);
+
+
+    }
+
+
+}
 
 
 
@@ -218,6 +295,10 @@ void setcursortype(CURSOR_TYPE c) { //커서숨기는 함수
 
 
 int main() {
+    HANDLE hThrd;
+    //main_theme(0);
+    _beginthreadex(NULL, 0, main_theme, 0,0,NULL);
+    //CloseHandle(hThrd);
     int i;
     srand((unsigned)time(NULL)); //난수표생성
     setcursortype(NOCURSOR); //커서 없앰
@@ -225,6 +306,24 @@ int main() {
     title_scene(); //메인타이틀 호출
 }
 
+void draw_title_scene(int x, int y, TITLE_MENU menu) {
+    switch (menu) {
+    case GAME_START:
+        gotoxy(x, y + 9); printf(CURSOR_ON_LEFT); printf("Game Start"); printf(CURSOR_ON_RIGHT);
+        gotoxy(x, y + 11); printf(CURSOR_OFF); printf("Key Setting"); printf(CURSOR_OFF);
+        gotoxy(x, y + 13); printf(CURSOR_OFF); printf("Exit"); printf(CURSOR_OFF);
+        break;
+    case KEY_SETTING:
+        gotoxy(x, y + 9); printf(CURSOR_OFF); printf("Game Start"); printf(CURSOR_OFF);
+        gotoxy(x, y + 11); printf(CURSOR_ON_LEFT); printf("Key Setting"); printf(CURSOR_ON_RIGHT);
+        gotoxy(x, y + 13); printf(CURSOR_OFF); printf("Exit"); printf(CURSOR_OFF);
+        break;
+    case EXIT:
+        gotoxy(x, y + 9); printf(CURSOR_OFF); printf("Game Start"); printf(CURSOR_OFF);
+        gotoxy(x, y + 11); printf(CURSOR_OFF); printf("Key Setting"); printf(CURSOR_OFF);
+        gotoxy(x, y + 13); printf(CURSOR_ON_LEFT); printf("Exit"); printf(CURSOR_ON_RIGHT);
+    }
+}
 
 void title_scene(void) {
     int x = 5; //타이틀화면이 표시되는 x좌표
@@ -241,7 +340,7 @@ void title_scene(void) {
     gotoxy(x, y + 4); printf("■■  ■□□□■■■□■■□□"); Sleep(100);
     gotoxy(x + 5, y + 2); printf("T E T R I S"); Sleep(100);
     gotoxy(x, y + 6); printf(" Press Enter ");
-    title_set(x, y, menu);
+    draw_title_scene(x, y, menu);
 
     for (cnt = 0;; cnt++) { //cnt를 1씩 증가시키면서 계속 반복    //하나도 안중요한 별 반짝이는 애니메이션효과
         if (_kbhit()) {
@@ -252,11 +351,11 @@ void title_scene(void) {
                 switch (key) {
                 case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
                     menu = (menu + 1) % 3;
-                    title_set(x, y, menu);
+                    draw_title_scene(x, y, menu);
                     break;
                 case UP: //위쪽 방향키 눌렀을때
                     menu = (menu + 2) % 3;
-                    title_set(x, y, menu);
+                    draw_title_scene(x, y, menu);
                 }
             }
             while (_kbhit()) _getch();
@@ -284,26 +383,6 @@ void title_scene(void) {
 }
 
 
-
-void title_set(int x, int y, TITLE_MENU menu) {
-    switch (menu) {
-    case GAME_START:
-        gotoxy(x, y + 9); printf(CURSOR_ON_LEFT); printf("Game Start"); printf(CURSOR_ON_RIGHT);
-        gotoxy(x, y + 11); printf(CURSOR_OFF); printf("Key Setting"); printf(CURSOR_OFF);
-        gotoxy(x, y + 13); printf(CURSOR_OFF); printf("Exit"); printf(CURSOR_OFF);
-        break;
-    case KEY_SETTING:
-        gotoxy(x, y + 9); printf(CURSOR_OFF); printf("Game Start"); printf(CURSOR_OFF);
-        gotoxy(x, y + 11); printf(CURSOR_ON_LEFT); printf("Key Setting"); printf(CURSOR_ON_RIGHT);
-        gotoxy(x, y + 13); printf(CURSOR_OFF); printf("Exit"); printf(CURSOR_OFF);
-        break;
-    case EXIT:
-        gotoxy(x, y + 9); printf(CURSOR_OFF); printf("Game Start"); printf(CURSOR_OFF);
-        gotoxy(x, y + 11); printf(CURSOR_OFF); printf("Key Setting"); printf(CURSOR_OFF);
-        gotoxy(x, y + 13); printf(CURSOR_ON_LEFT); printf("Exit"); printf(CURSOR_ON_RIGHT);
-    }
-}
-
 void setting_scene() {
     int x = 5; //타이틀화면이 표시되는 x좌표
     int y = 3; //타이틀화면이 표시되는 y좌표
@@ -324,18 +403,12 @@ void setting_scene() {
 void setting_new_key(int x, int y, int* key_set, KEY_TYPE type) {
     while (1) {
         if (_kbhit()) {
-            int key = _getch();
+            key = _getch();
+            
             if (key == 224) {
                 do { key = _getch(); } while (key == 224);//방향키지시값을 버림
-                switch (key) {
-                case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
-                    gotoxy(x + 14, y + 6 + type); printf("%s", DOWN_CHAR);
-                    key_set[0] = 224;
-                    key_set[1] = DOWN;
-                    setting_key_setting(x, y, type);
-                    break;
-
-                }
+                key_set = 180 + DOWN;
+                setting_key_setting(x, y, type);
             }
 
             while (_kbhit()) _getch();
@@ -350,6 +423,10 @@ void setting_key_setting(int x, int y, KEY_TYPE type) {
     while (1) {
         if (_kbhit()) {
             key = _getch();
+            if (key == ESC) {
+                system("cls");
+                title_scene();
+            }
             if (key == ENTER) break;
             if (key == 224) {
                 do { key = _getch(); } while (key == 224);//방향키지시값을 버림
@@ -394,9 +471,9 @@ void setting_key_setting(int x, int y, KEY_TYPE type) {
     }
 }
 
-char* key_set(int* key) {
-    if (key[0] == 224) {
-        switch (key[1]) {
+char* key_set(int key) {
+    if (key > 128) {
+        switch (key-128) {
         case LEFT:
             return LEFT_CHAR;
         case RIGHT:
@@ -407,20 +484,20 @@ char* key_set(int* key) {
             return DOWN_CHAR;
         }
     }
-    if (key[0] == -1) {
+    if (key == -1) {
         return INVALID_CHAR;
     }
-    else if (key[0] == ' ') {
+    else if (key == ' ') {
         return SPACE_CHAR;
     }
-    else if (key[0] == '\r') {
+    else if (key == ENTER) {
         return ENTER_CHAR;
     }
-    else if (key[0] == ESC) {
+    else if (key == ESC) {
         return ESC_CHAR;
     }
     else {
-        return key_string_set(key[0]);
+        return key_string_set(key);
     }
 }
 
