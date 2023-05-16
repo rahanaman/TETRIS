@@ -1,10 +1,45 @@
 순서도
 
-테트리스 인덱스 확인
-7이상이라면, shuffle()
-새로운 블럭 생성
+void draw_game_2p_battle_scene(void) // 기본적인 모든 전투 사이클 여기에서 통제
 
+int new_block(int player): // 초기화 단계에서는 호출 X index = 0 만 따로 초기화
+테트리스 인덱스 확인
+7이상이라면, shuffle();
+새로운 블럭 생성
+이후 인덱스 다시 0으로 초기화
+
+void drop_new_block();
 
 
 
 테트리스 인덱스 ++;
+
+
+
+
+
+draw_new_block();
+org 에 등록해두고 그리는 건 draw_map 에 들어갈 예정
+
+new block()이후에 수정되는 것
+drop_new_block();
+
+
+
+
+
+
+
+///
+
+
+
+테트리스 색상
+
+O - 240,240,0
+I - 0,240,240
+Z - 240, 0, 0
+S - 0, 240, 0
+L  - 240, 160, 0
+J - 0, 0, 240
+T - 160, 0,240

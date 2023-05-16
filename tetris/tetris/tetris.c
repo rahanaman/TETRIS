@@ -8,6 +8,7 @@
 #include <string.h>
 
 
+
 /// 키보드 값들
 #define LEFT 75 // 좌측 화살표
 #define RIGHT 77 // 우측 화살표
@@ -50,6 +51,9 @@
 
 
 #define XY_MAX 50
+#define COLOR_RESET "\033[0m"
+
+char COLOR[7][20] = { "\033[38;2;240;240;0m","\033[38;2;0;240;240m","\033[38;2;240;0;0m","\033[38;2;0;240;0m","\033[38;2;240;160;0m","\033[38;2;0;0;240m","\033[38;2;160;0;240m" };
 
 typedef enum { GAME_START = 0, KEY_SETTING, EXIT }TITLE_MENU;
 typedef enum { LEFT_KEY = 0, RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
@@ -60,6 +64,9 @@ int STATUS_Y_GOAL; //GOAL 정보표시위치Y 좌표 저장
 int STATUS_Y_LEVEL; //LEVEL 정보표시위치Y 좌표 저장
 int STATUS_Y_SCORE; //SCORE 정보표시위치Y 좌표 저장
 */
+
+
+
 
 int left_key[2] = { 128 + LEFT, '4'};
 int right_key[2] = { 128 + RIGHT ,'6'};
@@ -93,6 +100,12 @@ int blocks[7][4][4][4] = {
 {{0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0},{0,1,0,0,0,1,1,0,0,1,0,0,0,0,0,0},
  {0,0,0,0,1,1,1,0,0,1,0,0,0,0,0,0},{0,1,0,0,1,1,0,0,0,1,0,0,0,0,0,0}} // T
 }; //블록모양 저장 4*4공간에 블록을 표현 blcoks[b_type][b_rotation][i][j]로 사용 // 숫자가 커지면 시계방향 작아지면 반시계 방향
+
+struct color {
+    int r, g, b;
+}b_color[7] = { {240,240,0},{0,240,240},{240,0,0},{0,240,0},{240,160,0},{0,0,240},{160,0,240} };
+
+
 
 
 
@@ -201,8 +214,9 @@ void draw_next(int x, int y, int player);
 void draw_map(int x, int y, int player, int dx, int dy);
 
 
-
-int new_block();// 새로운 블록의 key 가져오기
+void draw_next_block(int x, int y, int player);
+void new_block(int player);// 새로운 블록의 key 가져오기
+void set_new_block(int player, int dx, int dy);// x,y 다 결정됨
 int check_key(void); // 키보드로 키 받아오기
 int check_is_upper(int key); // 키보드로  받아온 키 대문자 검사
 int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
@@ -622,7 +636,7 @@ void save_org_cpy(int player , int dx, int dy) {
     }
 }
 
-void shuffle_block(int player)
+void shuffle_block(int player) // 디버깅 완료
 {
 
     for (int i = 0; i < 7; ++i) {
@@ -638,22 +652,67 @@ void shuffle_block(int player)
     
 }
 
+void new_block(int player) { // 새로운 블록 인덱스 설정하기 //디버깅 완료
+    b_now[player]++;
+    if (b_now[player] >= 7) {
+        shuffle_block(player);
+        b_now[player] = 0;
+    }
+    
+}
+
+void set_new_block(int player, int dx, int dy) { //새로운 블록 그리기
+    int i, j;
+    bx[player] = (dx/2)-1;//블록 생성 위치x좌표(게임판의 가운데) 
+    by[player] = 0; //블록 생성위치 y좌표(제일 위)
+    b_rotation[player] = 0;
+
+    new_block_on = 0;
+    for (i = 0; i < 4; i++) { //게임판 bx, by위치에 블럭생성  
+        for (j = 0; j < 4; j++) {
+            if (blocks[b_type[player][0][b_now[player]]][b_rotation[player]][i][j] == 1) main_org[player][by[player] + i][bx[player] + j] = ACTIVE_BLOCK;
+        }
+    }
+
+
+}
+
+void debug() {
+    for (int i = 0; i < 14; ++i) {
+        printf("%d,", *((*b_type[P1]) + i));
+    }
+    printf("...");
+    for (int i = 0; i < 14; ++i) {
+        printf("%d,", *((*b_type[P2]) + i));
+    }
+    printf("...");
+    printf("%d, %d", b_now[P1], b_now[P2]);
+    printf("\n");
+}
 
 void game_2p_battle_scene(void) {
     //리셋 시작
-    b_now[P1] = 0;
-    b_now[P2] = 0;
+    new_block_on = 1;
+    int x[2], y[2];
+    x[0] = 3;
+    y[0] = 1;
+    x[1] = MAIN_X_1 + 16;
+    y[1] = 1;
     reset_org_cpy(P1,MAIN_X_1,MAIN_Y_1);
     reset_org_cpy(P2,MAIN_X_1,MAIN_Y_1);
     shuffle_block(P1);
     shuffle_block(P1);
     shuffle_block(P2);
     shuffle_block(P2);
-    //리셋 끝
+
+    set_new_block( P1, MAIN_X_1, MAIN_Y_1);
+    set_new_block(P2, MAIN_X_1, MAIN_Y_1);
     draw_game_2p_battle_scene();
+    //리셋 끝
+    while (1);
 }
 
-void draw_game_2p_battle_scene(void) {
+void draw_game_2p_battle_scene(void) { // 기본적인 틀 그리기, 
     int x = 3, y = 1;
     draw_map(x,y,P1, MAIN_X_1, MAIN_Y_1);
     draw_next(x+MAIN_X_1+1,y+2,P1, MAIN_X_1, MAIN_Y_1);
@@ -661,18 +720,19 @@ void draw_game_2p_battle_scene(void) {
     draw_next(2*x + 2*MAIN_X_1 + 11, y + 2, P2, MAIN_X_1, MAIN_Y_1);
 }
 
-void draw_block(int x, int y, int type, int rotation) {
+void draw_block(int x, int y, int type, int rotation) { //블록 그리기
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
             if (blocks[type][rotation][i][j] == 1) {
-                gotoxy(x + j, y + i); printf("■");
+                //SET_FG_COLOR(b_color[type].r, b_color[type].g, b_color[type].b);
+                gotoxy(x + j, y + i); printf("%s■%s",COLOR[type], COLOR_RESET);
             }
         }
     }
 }
 
-void draw_next(int x, int y, int player) {
+void draw_next(int x, int y, int player) { //draw_next는 초기화에서만 그리기 (깜빡이는 것 방지)
     gotoxy(x, y ); printf("+-  N E X T  -+ ");
     gotoxy(x, y + 1); printf("|             | ");
     gotoxy(x, y + 2); printf("|             | ");
@@ -693,6 +753,10 @@ void draw_next(int x, int y, int player) {
     gotoxy(x, y + 17); printf("|             | ");
     gotoxy(x, y + 18); printf("|             | ");
     gotoxy(x, y + 19); printf("+-- -  -  - --+ ");
+    draw_next_block(x,y,player);
+}
+
+void draw_next_block(int x, int y, int player) {
     draw_block(x + 2, y + 1, *((*b_type[player]) + b_now[player] + 1), 0);
     draw_block(x + 2, y + 5, *((*b_type[player]) + b_now[player] + 2), 0);
     draw_block(x + 2, y + 9, *((*b_type[player]) + b_now[player] + 3), 0);
