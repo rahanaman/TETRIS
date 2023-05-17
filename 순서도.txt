@@ -1,3 +1,23 @@
+game_scene 이 알고 있는 정보
+
+
+MODE_FUNC : 1p, 2p- 배틀 등등의 기본적으로 고정된 정보 (x,y 시작 위치)를 가지고 함수 콜함
+
+
+GAME_FUNC : // 이곳에 적힌 세 가지 함수만 알고 있음
+init_game(); // 초기 초기화 값
+check_input(); // 키 입력을 받는 단계
+update_game(); // 키 입력 단계 이후 기본적인 수정값
+
+==========================
+
+각자 하는 일
+
+init_game(); // 초기 초기화 값
+
+check_input(); // 키 입력을 받는 단계
+update_game(); // 키 입력 단계 이후 기본적인 수정값
+
 순서도
 
 void draw_game_2p_battle_scene(void) // 기본적인 모든 전투 사이클 여기에서 통제
