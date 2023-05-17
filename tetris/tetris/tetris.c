@@ -91,6 +91,9 @@ struct Player_info {
     int shadow_bx, shadow_by; //이동중인 블록의 쉐도우의 게임판상의 x, y좌표를 저장
     int x, y;
     int new_block_on;
+    int crush_on;
+    int space_key_on;
+
 
 }Player_info[2];
 
@@ -110,11 +113,45 @@ int pause_key = 'P';
 int esc_key = ESC;
 
 int blocks[7][4][4][4] = {
-{{0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0},{0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0},
- {0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0},{0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0}}, //O
+{{0,1,1,0,
+  0,1,1,0,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,1,1,0,
+  0,1,1,0,
+  0,0,0,0,
+  0,0,0,0}, {
+      
+  0,1,1,0,
+  0,1,1,0,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,1,1,0,
+  0,1,1,0,
+  0,0,0,0,
+  0,0,0,0}}, //O
 
-{{0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0},{0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0},
-{0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0},{0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0}}, // I
+{{0,0,0,0,
+  1,1,1,1,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,0,1,0,
+  0,0,1,0,
+  0,0,1,0,
+  0,0,1,0},{
+      
+  0,0,0,0,
+  0,0,0,0,
+  1,1,1,1,
+  0,0,0,0},{
+      
+  0,1,0,0,
+  0,1,0,0,
+  0,1,0,0,
+  0,1,0,0}}, // I
 
 {{1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0},{0,0,1,0,0,1,1,0,0,1,0,0,0,0,0,0},
   {0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0},{0,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0}}, // Z
@@ -241,7 +278,7 @@ void shuffle_block(struct Player_info* player);
 * b_now =0으로 바꾸기
 */
 
-
+void init_game_2p_battle_scene(void);
 void game_2p_battle_scene(void);
 void draw_game_2p_battle_scene(void);
 void draw_next(int x, int y, struct Player_info* player);
@@ -785,7 +822,7 @@ void set_shadow_block(struct Player_info* player) {
     player->shadow_bx = player->bx;
     player->shadow_by = player->by;
     while (1) {
-        if (!check_crush(player,type, rotation, player->shadow_bx+1, player->shadow_by+1)) break;
+        if (!check_crush(player,type, rotation, player->shadow_bx, player->shadow_by+1)) break;
         player->shadow_by++;
     }
     for (int i = 0; i < 4; i++) { //게임판 bx, by위치에 셰도우 블럭생성  
@@ -814,6 +851,10 @@ void debug() {
     */
 }
 
+void init_game_2p_battle_scene(void) {
+
+}
+
 void game_2p_battle_scene(void) {
     //리셋 시작
     new_block_on = 1;
@@ -840,18 +881,23 @@ void game_2p_battle_scene(void) {
     Player_info[1].y = 1;
     draw_game_2p_battle_scene();
     //리셋 끝
+
+
+
     while (1) {
         for (int i = 0; i < 5; ++i) {
             check_key(MAIN_X_1, MAIN_Y_1);
         }
         drop_block(P1,MAIN_X_1,MAIN_Y_1);
+        //drop_block(P2,MAIN_X_1,MAIN_Y_1);
+        draw_map(x[0], y[0], P1, MAIN_X_1, MAIN_Y_1);
+        draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
         if (new_block_on) {
             new_block(P1);
             set_new_block(P1, MAIN_X_1, MAIN_Y_1);
             set_shadow_block(P1);
             new_block_on = 0;
         }
-        draw_map(x[0], y[0], P1, MAIN_X_1, MAIN_Y_1);
         Sleep(200);
     }
 }
@@ -1014,7 +1060,7 @@ void drop_block(struct Player_info* player, int dx, int dy) {
         return; //함수 종료 
     }
     if (check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == true) move_block(player,dx,dy, player->bx, player->by + 1); //밑이 비어있으면 밑으로 한칸 이동 
-    if (check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) crush_on++; //밑으로 이동이 안되면  crush flag를 켬
+    if (check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) crush_on=1; //밑으로 이동이 안되면  crush flag를 켬
 }
 
 void move_block(struct Player_info* player,int dx, int dy, int bx, int by) {
@@ -1038,5 +1084,5 @@ void move_block(struct Player_info* player,int dx, int dy, int bx, int by) {
     player->by = by;
 
     
-    draw_map(3,1, P1, MAIN_X_1, MAIN_Y_1);
+    //draw_map(3,1, P1, MAIN_X_1, MAIN_Y_1);
 }
