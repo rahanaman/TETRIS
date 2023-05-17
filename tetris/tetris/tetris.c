@@ -60,6 +60,9 @@ char SHADOW_COLOR[7][20] = { "\033[38;2;240;240;100m","\033[38;2;100;240;240m","
 typedef enum { GAME_START = 0, KEY_SETTING, EXIT }TITLE_MENU;
 typedef enum { LEFT_KEY = 0, RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
 
+typedef void* GAME_FUNC(int x, int y, struct Player_info* player, int dx, int dy);
+typedef void* MODE_FUNC(GAME_FUNC);
+
 
 /*
 int STATUS_Y_GOAL; //GOAL 정보표시위치Y 좌표 저장
@@ -90,9 +93,15 @@ struct Player_info {
     int bx, by; // 이동중인 블록의 게임판상의 x,y좌표를 저장 
     int shadow_bx, shadow_by; //이동중인 블록의 쉐도우의 게임판상의 x, y좌표를 저장
     int x, y;
-    int new_block_on;
-    int crush_on;
-    int space_key_on;
+    int new_block_on; // 새로운 블록이 필요함을 알려주는 flag
+    int crush_on;//현재 이동중인 블록이 충돌상태인지 알려주는 flag 
+    int space_key_on;//hard drop상태임을 알려주는 flag 
+
+
+    int combo; //이어진 콤보 개수
+    int sent_garbage; // 보내는 방해블럭 개수 - line clear에 대한 점수만 등록
+    //총공격 블록 = sent_garbage의 개수 + combo 개수
+    int attack_on; // 공격을 보내는 시점 flag
 
 
 }Player_info[2];
@@ -153,20 +162,107 @@ int blocks[7][4][4][4] = {
   0,1,0,0,
   0,1,0,0}}, // I
 
-{{1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0},{0,0,1,0,0,1,1,0,0,1,0,0,0,0,0,0},
-  {0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0},{0,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0}}, // Z
+{{1,1,0,0,
+  0,1,1,0,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,0,1,0,
+  0,1,1,0,
+  0,1,0,0,
+  0,0,0,0},{
+         
+  0,0,0,0,
+  1,1,0,0,
+  0,1,1,0,
+  0,0,0,0},{
+      
+  0,0,0,0,
+  0,0,1,0,
+  0,1,1,0,
+  0,1,0,0}}, // Z
 
-{{0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0},{0,1,0,0,0,1,1,0,0,0,1,0,0,0,0,0},
- {0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0},{1,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0}}, // S
+{{0,1,1,0,
+  1,1,0,0,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,1,0,0,
+  0,1,1,0,
+  0,0,1,0,
+  0,0,0,0}, {
+      
+  0,0,0,0,
+  0,1,1,0,
+  1,1,0,0,
+  0,0,0,0},{
+          
+  1,0,0,0,
+  1,1,0,0,
+  0,1,0,0,
+  0,0,0,0}}, // S
 
-{{0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0},{0,1,0,0,0,1,0,0,0,1,1,0,0,0,0,0},
- {0,0,0,0,1,1,1,0,1,0,0,0,0,0,0,0},{1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0}}, // L
 
-{{1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0},{0,1,1,0,0,1,0,0,0,1,0,0,0,0,0,0},
- {0,0,0,0,1,1,1,0,0,0,1,0,0,0,0,0},{0,1,0,0,0,1,0,0,1,1,0,0,0,0,0,0}}, // J
+{{0,0,1,0,
+  1,1,1,0,
+  0,0,0,0,
+  0,0,0,0},{
+  
+  0,1,0,0,
+  0,1,0,0,
+  0,1,1,0,
+  0,0,0,0}, {
+      
+  0,0,0,0,
+  1,1,1,0,
+  1,0,0,0,
+  0,0,0,0},{
+      
+  1,1,0,0,
+  0,1,0,0,
+  0,1,0,0,
+  0,0,0,0}}, // L
 
-{{0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0},{0,1,0,0,0,1,1,0,0,1,0,0,0,0,0,0},
- {0,0,0,0,1,1,1,0,0,1,0,0,0,0,0,0},{0,1,0,0,1,1,0,0,0,1,0,0,0,0,0,0}} // T
+{{1,0,0,0,
+  1,1,1,0,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,1,1,0,
+  0,1,0,0,
+  0,1,0,0,
+  0,0,0,0}, {
+  
+  0,0,0,0,
+  1,1,1,0,
+  0,0,1,0,
+  0,0,0,0},{
+      
+  0,1,0,0,
+  0,1,0,0,
+  1,1,0,0,
+  0,0,0,0}}, // J
+
+
+{{0,1,0,0,
+  1,1,1,0,
+  0,0,0,0,
+  0,0,0,0},{
+      
+  0,1,0,0,
+  0,1,1,0,
+  0,1,0,0,
+  0,0,0,0}, {
+      
+  0,0,0,0,
+  1,1,1,0,
+  0,1,0,0,
+  0,0,0,0},{
+      
+  0,1,0,0,
+  1,1,0,0,
+  0,1,0,0,
+  0,0,0,0}} // T
 }; //블록모양 저장 4*4공간에 블록을 표현 blcoks[b_type][b_rotation][i][j]로 사용 // 숫자가 커지면 시계방향 작아지면 반시계 방향
 
 struct color {
@@ -260,10 +356,10 @@ char* key_set(int key);
 // 스트링 타입으로 변환하는 함수
 
 void setting_scene(void);
-void draw_setting_scene_player(int x, int y, int player);
-void setting_scene_set(int x, int y, KEY_TYPE type, int player); // 옵션 받아오기
-void draw_setting_scene(int x, int y, KEY_TYPE type, int player);
-void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, int player);
+void draw_setting_scene_player(int x, int y, struct Player_info* player);
+void setting_scene_set(int x, int y, KEY_TYPE type, struct Player_info* player); // 옵션 받아오기
+void draw_setting_scene(int x, int y, KEY_TYPE type, struct Player_info* player);
+void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, struct Player_info* player);
 
 void reset_org_cpy(struct Player_info* player, int dx, int dy); //main_org[][]를 초기화, dx, dy만큼
 void save_org_cpy(struct Player_info* player, int dx, int dy); // 게임판(main_cpy[][]를 초기화)
@@ -278,9 +374,26 @@ void shuffle_block(struct Player_info* player);
 * b_now =0으로 바꾸기
 */
 
+
+
+void game_scene(MODE_FUNC f);
+
+
+void execute_2p_battle_game_func(GAME_FUNC f);
+
+void init_game(int x, int y, struct Player_info* player, int dx, int dy);
+void check_input(int x, int y, struct Player_info* player, int dx, int dy);
+void update_game(int x, int y, struct Player_info* player, int dx, int dy);
+
+
+
 void init_game_2p_battle_scene(void);
 void game_2p_battle_scene(void);
 void draw_game_2p_battle_scene(void);
+
+
+
+
 void draw_next(int x, int y, struct Player_info* player);
 void draw_map(int x, int y, struct Player_info* player, int dx, int dy);
 
@@ -525,7 +638,8 @@ void title_scene(void) {
     switch (menu) {
     case GAME_START:
         system("cls");
-        game_2p_battle_scene(); // 나중에 모드로 수정예정
+        game_scene(execute_2p_battle_game_func);
+        //game_2p_battle_scene(); // 나중에 모드로 수정예정
         break;
     case KEY_SETTING:
         system("cls");
@@ -544,12 +658,12 @@ void setting_scene() {
     int x = 5; //타이틀화면이 표시되는 x좌표
     int y = 3; //타이틀화면이 표시되는 y좌표
     KEY_TYPE key = LEFT_KEY;
-    int player = P1;
+    struct Player_info* player = P1;
     draw_setting_scene_player(x, y, player);
     setting_scene_set(x, y, key,player);
 }
 
-void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
+void setting_scene_set(int x, int y, KEY_TYPE type, struct Player_info* player) {
     draw_setting_scene(x, y, type,player);
     while (1) {
         if (_kbhit()) {
@@ -574,7 +688,14 @@ void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
                     break;
                 case RIGHT:
                 case LEFT:
-                    player = 1 - player;
+                    if (player == P1) {
+                        player ++;
+                    }
+                    else {
+                        player--;
+                    }
+
+                    
                     draw_setting_scene_player(x, y, player);
                     draw_setting_scene(x, y, type,player);
                     break;
@@ -586,31 +707,31 @@ void setting_scene_set(int x, int y, KEY_TYPE type, int player) {
     }
     switch (type) {
     case LEFT_KEY:
-        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", " ->", key_set(left_key[player]), " <-");
+        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", " ->", key_set(player->left_key), " <-");
         //setting_new_key(x, y, &left_key[player], type, player);
         break;
     case RIGHT_KEY:
-        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(right_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->right_key), CURSOR_ON_RIGHT);
         break;
     case DOWN_KEY:
-        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(down_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->down_key), CURSOR_ON_RIGHT);
         break;
     case HARD_DROP_KEY:
-        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hard_drop_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->hard_drop_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_KEY:
-        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->rotate_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_COUNTER_KEY:
-        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_counter_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->rotate_counter_key), CURSOR_ON_RIGHT);
         break;
     case HOLD_KEY:
-        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hold_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->hold_key), CURSOR_ON_RIGHT);
         break;
     }
 }
 
-void draw_setting_scene_player(int x, int y, int player) {
+void draw_setting_scene_player(int x, int y, struct Player_info* player) {
     if (player == P1) {
         gotoxy(x, y + 0); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
         gotoxy(x, y + 1); printf("▤                                      ▤");
@@ -633,7 +754,7 @@ void draw_setting_scene_player(int x, int y, int player) {
     }
 }
 
-void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, int player) {
+void setting_new_key(int x, int y, int* key_set, KEY_TYPE type, struct Player_info* player) {
     while (1) {
         if (_kbhit()) {
             key = _getch();
@@ -685,39 +806,39 @@ char* key_string_set(int key) {
     return key_string;
 }
 
-void draw_setting_scene(int x, int y, KEY_TYPE type,int player) {
-    gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", CURSOR_OFF, key_set(left_key[player]), CURSOR_OFF);
-    gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_OFF, key_set(right_key[player]), CURSOR_OFF);
-    gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_OFF, key_set(down_key[player]), CURSOR_OFF);
-    gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_OFF, key_set(hard_drop_key[player]), CURSOR_OFF);
-    gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_OFF, key_set(rotate_key[player]), CURSOR_OFF);
-    gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_OFF, key_set(rotate_counter_key[player]), CURSOR_OFF);
-    gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_OFF, key_set(hold_key[player]), CURSOR_OFF);
+void draw_setting_scene(int x, int y, KEY_TYPE type,struct Player_info* player) {
+    gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", CURSOR_OFF, key_set(player->left_key), CURSOR_OFF);
+    gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_OFF, key_set(player->right_key), CURSOR_OFF);
+    gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_OFF, key_set(player->down_key), CURSOR_OFF);
+    gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_OFF, key_set(player->hard_drop_key), CURSOR_OFF);
+    gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_OFF, key_set(player->rotate_key), CURSOR_OFF);
+    gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_OFF, key_set(player->rotate_counter_key), CURSOR_OFF);
+    gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_OFF, key_set(player->hold_key), CURSOR_OFF);
     gotoxy(x, y + 13); printf("▤                                      ▤");
     gotoxy(x, y + 14); printf("▤      PRESS ESC TO BACK TO MAIN       ▤");
 
 
     switch (type) {
     case LEFT_KEY:
-        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(left_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 6); printf("▤  %s    LEFT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->left_key), CURSOR_ON_RIGHT);
         break;
     case RIGHT_KEY:
-        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(right_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 7); printf("▤  %s   RIGHT     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->right_key), CURSOR_ON_RIGHT);
         break;
     case DOWN_KEY:
-        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(down_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 8); printf("▤  %s    DOWN     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->down_key), CURSOR_ON_RIGHT);
         break;
     case HARD_DROP_KEY:
-        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hard_drop_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 9); printf("▤  %s HARD DROP   :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->hard_drop_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_KEY:
-        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 10); printf("▤  %s    회전     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->rotate_key), CURSOR_ON_RIGHT);
         break;
     case ROTATE_COUNTER_KEY:
-        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(rotate_counter_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 11); printf("▤  %s반시계 회전  :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->rotate_counter_key), CURSOR_ON_RIGHT);
         break;
     case HOLD_KEY:
-        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(hold_key[player]), CURSOR_ON_RIGHT);
+        gotoxy(x, y + 12); printf("▤  %s    HOLD     :     %6s  %s   ▤", CURSOR_ON_LEFT, key_set(player->hold_key), CURSOR_ON_RIGHT);
         break;
 
     }
@@ -855,6 +976,10 @@ void init_game_2p_battle_scene(void) {
 
 }
 
+void game_scene(MODE_FUNC f) {
+
+}
+
 void game_2p_battle_scene(void) {
     //리셋 시작
     new_block_on = 1;
@@ -892,6 +1017,7 @@ void game_2p_battle_scene(void) {
         //drop_block(P2,MAIN_X_1,MAIN_Y_1);
         draw_map(x[0], y[0], P1, MAIN_X_1, MAIN_Y_1);
         draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
+        //execute_2p_battle_game_func(draw_map);
         if (new_block_on) {
             new_block(P1);
             set_new_block(P1, MAIN_X_1, MAIN_Y_1);
@@ -979,8 +1105,8 @@ void draw_map(int x, int y,struct Player_info* player, int dx, int dy) {
                     printf("□");
                     break;
                 case INACTIVE_BLOCK: //굳은 블럭 모양  
-                    printf("□");
-                    //PRINT_BLOCK(player->main_org[i][j].b_color);
+                    //printf("□");
+                    PRINT_BLOCK(player->main_org[i][j].b_color);
                     break;
                 case ACTIVE_BLOCK: //움직이고있는 블럭 모양  
                     PRINT_BLOCK(player->main_org[i][j].b_color);
@@ -1032,8 +1158,8 @@ void check_key(int dx, int dy) {
         else { //방향키가 아닌경우 
             switch (key) {
             case SPACE: //스페이스키 눌렀을때
-                space_key_on = 1; //스페이스키 flag를 띄움 
-                while (crush_on == 0) { //바닥에 닿을때까지 이동시킴 
+                //space_key_on = 1; //스페이스키 flag를 띄움 
+                while (P1->crush_on == 0) { //바닥에 닿을때까지 이동시킴 
                     drop_block(P1, dx, dy);
                 }
             }
@@ -1044,23 +1170,31 @@ void check_key(int dx, int dy) {
 
 
 
+void execute_key(struct Player_info* player,KEY_TYPE type) {
+    if (type == BACK_KEY) {
+        // 게임 일시 정지, 나가거나 이어서 하기 가능
+    }
+}
+
+
+
 void drop_block(struct Player_info* player, int dx, int dy) {
     int i, j;
 
-    if (crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == true) crush_on = 0; //밑이 비어있으면 crush flag 끔 
-    if (crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) { //밑이 비어있지않고 crush flag가 켜저있으면 
+    if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == true) crush_on = 0; //밑이 비어있으면 crush flag 끔 
+    if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) { //밑이 비어있지않고 crush flag가 켜저있으면 
         for (i = 0; i < dy; i++) { //현재 조작중인 블럭을 굳힘 
             for (j = 0; j < dx; j++) {
                 if (player->main_org[i][j].b_status == ACTIVE_BLOCK) player->main_org[i][j].b_status = INACTIVE_BLOCK;
             }
         }
-        crush_on = 0; //flag를 끔 
+        player->crush_on = 0; //flag를 끔 
         //check_line(); //라인체크를 함 
-        new_block_on = 1; //새로운 블럭생성 flag를 켬    
+        player->new_block_on = 1; //새로운 블럭생성 flag를 켬    
         return; //함수 종료 
     }
     if (check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == true) move_block(player,dx,dy, player->bx, player->by + 1); //밑이 비어있으면 밑으로 한칸 이동 
-    if (check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) crush_on=1; //밑으로 이동이 안되면  crush flag를 켬
+    if (check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) player->crush_on=1; //밑으로 이동이 안되면  crush flag를 켬
 }
 
 void move_block(struct Player_info* player,int dx, int dy, int bx, int by) {
@@ -1085,4 +1219,66 @@ void move_block(struct Player_info* player,int dx, int dy, int bx, int by) {
 
     
     //draw_map(3,1, P1, MAIN_X_1, MAIN_Y_1);
+}
+
+
+void execute_2p_battle_game_func(GAME_FUNC f) {
+    f(3,1,P1,MAIN_X_1,MAIN_Y_1);
+    f(16+MAIN_X_1,1,P2,MAIN_X_1,MAIN_Y_1);
+}
+
+void init_game(int x, int y, struct Player_info* player, int dx, int dy) {
+    reset_org_cpy(player,dx, dy);
+    shuffle_block(player);
+    shuffle_block(player);
+    //debug();
+    set_new_block(player, dx, dy);
+    set_shadow_block(player);
+    draw_map(x, y, player, dx, dy);
+    draw_next(x + dx + 1, y + 2, player, dx, dy);
+}
+
+void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
+    check_key(); //키입력확인 
+    draw_main(); //화면을 그림 
+    Sleep(speed); //게임속도조절 
+    if (crush_on && check_crush(bx, by + 1, b_rotation) == false) Sleep(100);
+    //블록이 충돌중인경우 추가로 이동및 회전할 시간을 갖음 
+    if (space_key_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
+        space_key_on = 0;
+    }
+}
+
+void update_game(int x, int y, struct Player_info* player, int dx, int dy) {
+    drop_block(player,dx, dy);
+    if (player->new_block_on) {
+        new_block(P1);
+        set_new_block(P1, dx, dy);
+        set_shadow_block(P1);
+        player->new_block_on = 0;
+    }
+    draw_map(x,y, player, dx, dy);
+    while (1) {
+        for (int i = 0; i < 5; ++i) {
+            check_key(MAIN_X_1, MAIN_Y_1);
+        }
+        drop_block(P1, MAIN_X_1, MAIN_Y_1);
+        //drop_block(P2,MAIN_X_1,MAIN_Y_1);
+       
+        draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
+        //execute_2p_battle_game_func(draw_map);
+        
+        Sleep(200);
+    }
+}
+
+void game_scene(MODE_FUNC f) {
+    f(init_game);
+
+    while (1) {
+        for (int i = 0; i < 5; ++i) {
+            f(check_input);
+        }
+        f(update_game);
+    }
 }
