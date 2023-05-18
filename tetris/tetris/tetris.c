@@ -6,6 +6,8 @@
 #include<time.h>
 #include<stdlib.h>
 #include <string.h>
+#include <process.h>
+#include <handleapi.h>
 
 
 
@@ -48,7 +50,7 @@
 #define WALL 1
 #define INACTIVE_BLOCK 2 // 이동이 완료된 블록값 
 
-
+#define MAX_INPUT 1000
 #define XY_MAX 50
 #define COLOR_RESET "\033[0m"
 #define PRINT_BLOCK(X) printf("%s▣%s",X,COLOR_RESET)
@@ -58,10 +60,17 @@ char COLOR[7][20] = { "\033[38;2;240;240;0m","\033[38;2;0;240;240m","\033[38;2;2
 char SHADOW_COLOR[7][20] = { "\033[38;2;240;240;100m","\033[38;2;100;240;240m","\033[38;2;240;180;180m","\033[38;2;180;240;180m","\033[38;2;240;160;100m","\033[38;2;180;180;240m","\033[38;2;160;100;240m" };
 
 typedef enum { GAME_START = 0, KEY_SETTING, EXIT }TITLE_MENU;
-typedef enum { LEFT_KEY = 0, RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
+typedef enum { NO_KEY = 0,LEFT_KEY , RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
 
 typedef void* GAME_FUNC(int x, int y, struct Player_info* player, int dx, int dy);
 typedef void* MODE_FUNC(GAME_FUNC);
+
+struct Key_queue {
+    KEY_TYPE key[MAX_INPUT];
+    int front;
+    int rear;
+};
+
 
 
 /*
@@ -102,6 +111,8 @@ struct Player_info {
     int sent_garbage; // 보내는 방해블럭 개수 - line clear에 대한 점수만 등록
     //총공격 블록 = sent_garbage의 개수 + combo 개수
     int attack_on; // 공격을 보내는 시점 flag
+
+    struct Key_queue key_queue;
 
 
 }Player_info[2];
@@ -334,6 +345,10 @@ int last_score = 0; //마지막게임점수
 int best_score = 0; //최고게임점수 
 
 
+
+HANDLE hThrd_bgm;
+
+
 void init_data(void);
 
 void title_scene(void);
@@ -345,6 +360,7 @@ void mode_select_scene(void);
 void drop_block(struct Player_info* player, int dx, int dy);
 
 //콘솔창 draw/erase 함수
+void init_player(struct Player_info* player);
 
 void draw_game_scene(void);
 void draw_interface(int x, int y); // (x,y)를 기준으로 기본인터페이스 그리기
@@ -392,7 +408,7 @@ void game_2p_battle_scene(void);
 void draw_game_2p_battle_scene(void);
 
 
-
+void get_game_input(void);
 
 void draw_next(int x, int y, struct Player_info* player);
 void draw_map(int x, int y, struct Player_info* player, int dx, int dy);
@@ -402,7 +418,7 @@ void draw_next_block(int x, int y, struct Player_info* player);
 void new_block(struct Player_info* player);// 새로운 블록의 key 가져오기
 void set_new_block(struct Player_info* player, int dx, int dy);// x,y 다 결정됨
 void set_shadow_block(struct Player_info* player);
-void check_key(int dx, int dt); // 키보드로 키 받아오기
+void check_key(struct Player_info* player,int dx, int dt); // 키보드로 키 받아오기
 int check_is_upper(int k); // 키보드로  받아온 키 대문자 검사
 int check_is_rotatable(int* x, int* y); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
 int check_crush(struct Player_info* player, int type, int rotation, int bx, int by);
@@ -559,18 +575,37 @@ void init_data(void) {
 
 }
 
+void enqueue(struct Key_queue* q, KEY_TYPE type) {
+    if ((q->rear - q->front + MAX_INPUT) % MAX_INPUT == MAX_INPUT - 1) return;
+    q->key[q->rear] = type;
+    q->rear++;
+    return;
+}
+
+KEY_TYPE dequeue(struct Key_queue* q) {
+    if (q->front == q->rear) return NO_KEY;
+    else {
+        q->front++;
+        return q->key[q->front];
+    }
+}
+
 int main() {
 
-    HANDLE hThrd;
-    //main_theme(0);
-    _beginthreadex(NULL, 0, main_theme, 0,0,NULL);
+    get_game_input();
+
+    /*
+    hThrd_bgm = (HANDLE)_beginthreadex(NULL, 0, main_theme, 0,0,NULL);
     init_data();
+
 
     int i;
     srand((unsigned)time(NULL)); //난수표생성
     setcursortype(NOCURSOR); //커서 없앰
 
     title_scene(); //메인타이틀 호출
+    */
+
 }
 
 void draw_title_scene(int x, int y, TITLE_MENU menu) {
@@ -677,12 +712,14 @@ void setting_scene_set(int x, int y, KEY_TYPE type, struct Player_info* player) 
                 do { key = _getch(); } while (key == 224);//방향키지시값을 버림
                 switch (key) {
                 case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
-                    type = (type + 1) % 7;
+                    type = type + 1;
+                    if (type == 8) type = 1;
                     while (_kbhit()) _getch();
                     draw_setting_scene(x, y, type,player);
                     break;
                 case UP: //위쪽 방향키 눌렀을때
-                    type = (type + 6) % 7;
+                    type -= 1;
+                    if (type == 0) type = 7;
                     while (_kbhit()) _getch();
                     draw_setting_scene(x, y, type,player);
                     break;
@@ -976,10 +1013,7 @@ void init_game_2p_battle_scene(void) {
 
 }
 
-void game_scene(MODE_FUNC f) {
-
-}
-
+\
 void game_2p_battle_scene(void) {
     //리셋 시작
     new_block_on = 1;
@@ -1011,18 +1045,19 @@ void game_2p_battle_scene(void) {
 
     while (1) {
         for (int i = 0; i < 5; ++i) {
-            check_key(MAIN_X_1, MAIN_Y_1);
+            check_key(P1,MAIN_X_1, MAIN_Y_1);
         }
         drop_block(P1,MAIN_X_1,MAIN_Y_1);
         //drop_block(P2,MAIN_X_1,MAIN_Y_1);
         draw_map(x[0], y[0], P1, MAIN_X_1, MAIN_Y_1);
         draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
         //execute_2p_battle_game_func(draw_map);
-        if (new_block_on) {
+        if (P1->new_block_on) {
             new_block(P1);
             set_new_block(P1, MAIN_X_1, MAIN_Y_1);
             set_shadow_block(P1);
-            new_block_on = 0;
+            P1->new_block_on = 0;
+            draw_next(x[0] + MAIN_X_1 + 1, y[0] + 2, P1, MAIN_X_1, MAIN_Y_1);
         }
         Sleep(200);
     }
@@ -1145,27 +1180,8 @@ int check_is_upper(int k) {// 키보드로  받아온 키 대문자 검사
     return k;
 }
 
-void check_key(int dx, int dy) {
-    key = 0; //키값 초기화  
+void check_key(struct Player_info* player, int dx, int dy) {
 
-    if (_kbhit()) { //키입력이 있는 경우  
-        key = check_is_upper(_getch());
-        if (key == 224) { //방향키인경우 
-            do { key = _getch(); } while (key == 224);//방향키지시값을 버림 
-            switch (key + 128) {
-            }                   //바닥에 닿은 경우 위쪽으로 한칸띄워서 회전이 가능하면 그렇게 함(특수동작)
-        }
-        else { //방향키가 아닌경우 
-            switch (key) {
-            case SPACE: //스페이스키 눌렀을때
-                //space_key_on = 1; //스페이스키 flag를 띄움 
-                while (P1->crush_on == 0) { //바닥에 닿을때까지 이동시킴 
-                    drop_block(P1, dx, dy);
-                }
-            }
-        }
-    }
-    while (_kbhit()) _getch(); //키버퍼를 비움 
 }
 
 
@@ -1228,6 +1244,7 @@ void execute_2p_battle_game_func(GAME_FUNC f) {
 }
 
 void init_game(int x, int y, struct Player_info* player, int dx, int dy) {
+    init_player(player);
     reset_org_cpy(player,dx, dy);
     shuffle_block(player);
     shuffle_block(player);
@@ -1236,49 +1253,83 @@ void init_game(int x, int y, struct Player_info* player, int dx, int dy) {
     set_shadow_block(player);
     draw_map(x, y, player, dx, dy);
     draw_next(x + dx + 1, y + 2, player, dx, dy);
+    
+    
+}
+
+
+
+void init_player(struct Player_info* player) {
+    player->attack_on = 0;
+    player->b_now = 0;
+    player->b_rotation = 0;
+    player->combo = 0;
+    player->crush_on = 0;
+    player->new_block_on = 0;
+    player->sent_garbage = 0;
+    player->shadow_bx = 0;
+    player->shadow_by = 0;
+    player->bx = 0;
+    player->by = 0;
+    
 }
 
 void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
-    check_key(); //키입력확인 
-    draw_main(); //화면을 그림 
-    Sleep(speed); //게임속도조절 
-    if (crush_on && check_crush(bx, by + 1, b_rotation) == false) Sleep(100);
+    check_key(player,dx,dy); //키입력확인 
+    draw_map(x, y, player, dx, dy);
+    
+    if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation,player->bx, player->by + 1) == false) Sleep(100);
     //블록이 충돌중인경우 추가로 이동및 회전할 시간을 갖음 
-    if (space_key_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
-        space_key_on = 0;
+    if (player->space_key_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
+        player->space_key_on = 0;
     }
 }
 
 void update_game(int x, int y, struct Player_info* player, int dx, int dy) {
     drop_block(player,dx, dy);
     if (player->new_block_on) {
-        new_block(P1);
-        set_new_block(P1, dx, dy);
-        set_shadow_block(P1);
+        new_block(player);
+        set_new_block(player, dx, dy);
+        set_shadow_block(player);
         player->new_block_on = 0;
+        draw_next(x + dx + 1, y + 2, P1, dx,dy);
     }
     draw_map(x,y, player, dx, dy);
+    
+}
+
+
+void get_game_input(void) {
+    while (1) {
+        if (_kbhit()) { //키입력이 있는 경우  
+            key = check_is_upper(_getch());
+            if (key == 224) { //방향키인경우 
+                do { key = _getch(); } while (key == 224);//방향키지시값을 버림 
+                switch (key + 128) {
+
+                }
+            }
+            else {
+                printf("%c", key);
+            }
+        }
+        
+        //while (_kbhit()) _getch(); //키버퍼를 비움 
+    }
+    
+}
+
+
+void game_scene(MODE_FUNC f) {
+    f(init_game);
+    //HANDLE hThrd_getch = (HANDLE)_beginthreadex(NULL, 0, main_theme, 0, 0, NULL);
     while (1) {
         for (int i = 0; i < 5; ++i) {
-            check_key(MAIN_X_1, MAIN_Y_1);
+            f(check_input);
+            Sleep(100);
         }
-        drop_block(P1, MAIN_X_1, MAIN_Y_1);
-        //drop_block(P2,MAIN_X_1,MAIN_Y_1);
-       
-        draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
-        //execute_2p_battle_game_func(draw_map);
-        
+        f(update_game);
         Sleep(200);
     }
 }
 
-void game_scene(MODE_FUNC f) {
-    f(init_game);
-
-    while (1) {
-        for (int i = 0; i < 5; ++i) {
-            f(check_input);
-        }
-        f(update_game);
-    }
-}

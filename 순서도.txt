@@ -95,3 +95,27 @@ Perfect Clears always sent 10 lines. No additional lines are sent when clearing 
 There's no garbage blocking (thus garbage may be inserted during a combo). However, there's garbage countering (incoming garbage lines are cancelled before garbage is sent over to the opponent)
 If 2 or more pending garbage lines are inserted at once, then there's a big chance that 2 consecutive lines will have the garbage hole in the same column (about 70% for each pair). However, it's unlikely (only a 10% chance) that the bottom-most inserted garbage line will have the hole in the same column as the previously-received garbage line below (if there is any).
 
+
+===============================================
+
+
+    key = 0; //키값 초기화  
+
+    if (_kbhit()) { //키입력이 있는 경우  
+        key = check_is_upper(_getch());
+        if (key == 224) { //방향키인경우 
+            do { key = _getch(); } while (key == 224);//방향키지시값을 버림 
+            switch (key + 128) {
+            }                   //바닥에 닿은 경우 위쪽으로 한칸띄워서 회전이 가능하면 그렇게 함(특수동작)
+        }
+        else { //방향키가 아닌경우 
+            switch (key) {
+            case SPACE: //스페이스키 눌렀을때
+                //space_key_on = 1; //스페이스키 flag를 띄움 
+                while (player->crush_on == 0) { //바닥에 닿을때까지 이동시킴 
+                    drop_block(player, dx, dy);
+                }
+            }
+        }
+    }
+    while (_kbhit()) _getch(); //키버퍼를 비움 
