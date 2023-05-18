@@ -1406,7 +1406,7 @@ void hard_drop(struct Player_info* player, int dx, int dy) {
 
 int check_is_rotatable(struct Player_info* player, int type, int rotation, int wise, int bx, int by) {
 
-    int index = 1 ;
+    int index = 1;
     if (type == 1) index = 0;
     int rot;
     if (wise == CLOCKWISE) {
@@ -1427,11 +1427,12 @@ void rotate(struct Player_info* player, int dx, int dy) {
     if (type == 0) return;
     int rotation = player->b_rotation;
     rotation = (rotation + 1) % 4;
-    int index = check_is_rotatable(player, type, player->b_rotation, CLOCKWISE, player->bx, player->by);
-
-    if (index == -1) return;
+    int i = check_is_rotatable(player, type, player->b_rotation, CLOCKWISE, player->bx, player->by);
+    int index = 1;
+    if (type == 1) index = 0;
+    if (i == -1) return;
     else {
-        rotate_block(player, dx, dy, player->bx + wall_kick_data[type][player->b_rotation][CLOCKWISE][index][0], player->by - wall_kick_data[type][player->b_rotation][CLOCKWISE][index][1], CLOCKWISE);
+        rotate_block(player, dx, dy, player->bx + wall_kick_data[index][player->b_rotation][CLOCKWISE][i][0], player->by - wall_kick_data[index][player->b_rotation][CLOCKWISE][i][1], CLOCKWISE);
         erase_shadow_block(player, dx, dy);
         set_shadow_block(player);
     }
