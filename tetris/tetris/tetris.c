@@ -67,6 +67,9 @@ typedef enum { NO_KEY = 0,LEFT_KEY , RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_
 
 typedef void* GAME_FUNC(int x, int y, struct Player_info* player, int dx, int dy);
 typedef void* MODE_FUNC(GAME_FUNC);
+typedef void* OPTION_FUNC(void);
+typedef void* GAME_OVER_FUNC(struct Player_info* player);
+
 
 struct Key_queue {
     KEY_TYPE key[MAX_INPUT];
@@ -111,6 +114,7 @@ struct Player_info {
     int hold_block_type; // hold 중인 블록 종류
     int new_hold_on;
     int hold_on;
+    int t_spin_available;
 
     int combo; //이어진 콤보 개수
     int sent_garbage; // 보내는 방해블럭 개수 - line clear에 대한 점수만 등록
@@ -118,6 +122,10 @@ struct Player_info {
     int attack_on; // 공격을 보내는 시점 flag
 
     struct Key_queue key_queue;
+
+    int is_attack_mode; // 공격을 하는 모드인지
+    struct Player_info* target; // 공격을 하는 타겟
+    int attacked; // 공격을 받은 양 기억해두는 곳
 
 
 }Player_info[2];
@@ -318,7 +326,9 @@ int wall_kick_data[2][4][2][5][2] = {
 //data[index참조][현재 rotation index][시계방향 - 0, 반시계방향 - 1][5][2] 
 //dx는 더하고, dy는 빼야함 주요요요요용
 
-
+int t_spin_damage[4] = { 0,2,4,6 };
+int combo_damage[21] = { 0,0,1,1,2,2,3,3,4,4,4,5,5,5,5,5,5,5,5,5,5};
+int line_damage[5] = { 0,0,1,2,4 };
 int b_type[2][2][7] = { { { 0,1,2,3,4,5,6 } ,{ 0,1,2,3,4,5,6 } } ,{ { 0,1,2,3,4,5,6 } ,{ 0,1,2,3,4,5,6 } } }; // 테트리스 가방 정렬
 int b_rotation[2]; // 블록 회전값 저장 
 int b_now[2]; // 현재 인덱스 저장 
@@ -350,7 +360,9 @@ int last_score = 0; //마지막게임점수
 int best_score = 0; //최고게임점수 
 
 
+int is_game_over;
 
+GAME_OVER_FUNC* game_over_func;
 HANDLE hThrd_bgm;
 HANDLE hTHrd_input;
 
@@ -398,7 +410,7 @@ void shuffle_block(struct Player_info* player);
 
 
 
-void game_scene(MODE_FUNC f);
+void game_scene(MODE_FUNC f, OPTION_FUNC o);
 
 
 void execute_2p_battle_game_func(GAME_FUNC f);
@@ -428,10 +440,14 @@ void set_shadow_block(struct Player_info* player);
 void erase_shadow_block(struct Player_info* player, int dx, int dy);
 void check_key(struct Player_info* player,int dx, int dt); // 키보드로 키 받아오기
 int check_is_upper(int k); // 키보드로  받아온 키 대문자 검사
-int check_is_rotatable(struct Player_info* player, int type,int rotation, int wise, int bx, int by); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
+int check_is_rotatable(struct Player_info* player, int type,int rotation, int wise, int bx, int by,int dx, int dy); // 회전 가능 하다면 변경된 x,y 값을 기준으로 변경된 좌표를 기준으로 테트리스 배치
 int check_crush(struct Player_info* player, int type, int rotation, int bx, int by);
 void move_block(struct Player_info* player, int dx, int dy,int bx, int by);
+void check_line(int x, int y, struct Player_info* player, int dx, int dy);
+int check_game_over(struct Player_info* player, int dx, int dy);
 
+void check_get_attacked(int x, int y, struct Player_info* player, int dx, int dy);
+void send_attack(struct Player_info* player);
 
 void left(struct Player_info* player, int dx, int dy);
 void right(struct Player_info* player, int dx, int dy);
@@ -441,7 +457,7 @@ void hard_drop(struct Player_info* player, int dx, int dy);
 void rotate(struct Player_info* player, int dx, int dy);
 void rotate_counter(struct Player_info* player, int dx, int dy);
 
-
+void option_2p_battle_game(void);
 
 
 unsigned main_theme(void* arg);
@@ -560,7 +576,7 @@ void init_data(void) {
     Player_info[0].pause_key = 'P';
     Player_info[0].right_key = 128 + RIGHT;
     Player_info[0].rotate_counter_key = 'Z';
-    Player_info[0].rotate_key = 'X';
+    Player_info[0].rotate_key = UP+128;
     Player_info[0].b_now = 0;
     Player_info[0].b_rotation = 0;
     Player_info[0].bx = 0;
@@ -571,7 +587,7 @@ void init_data(void) {
 
 
     Player_info[1].down_key = '5';
-    Player_info[1].esc_key = ESC;
+    Player_info[1].esc_key = -1;
     Player_info[1].hard_drop_key = '0';
     Player_info[1].hold_key = ENTER;
     Player_info[1].left_key = '4';
@@ -618,8 +634,6 @@ void init_queue(struct Key_queue* q) {
 }
 
 int main() {
-
-    
     hThrd_bgm = (HANDLE)_beginthreadex(NULL, 0, main_theme, 0,0,NULL);
     init_data();
 
@@ -699,7 +713,7 @@ void title_scene(void) {
     case GAME_START:
         system("cls");
         hTHrd_input = (HANDLE)_beginthreadex(NULL, 0, get_game_input, 2, 0, NULL);
-        game_scene(execute_2p_battle_game_func);
+        game_scene(execute_2p_battle_game_func,option_2p_battle_game);
         //game_2p_battle_scene(); // 나중에 모드로 수정예정
         break;
     case KEY_SETTING:
@@ -1067,54 +1081,6 @@ void init_game_2p_battle_scene(void) {
 }
 
 
-void game_2p_battle_scene(void) {
-    //리셋 시작
-    new_block_on = 1;
-    int x[2], y[2];
-    x[0] = 3;
-    y[0] = 1;
-    x[1] = MAIN_X_1 + 16;
-    y[1] = 1;
-    crush_on = 0;
-    reset_org_cpy(P1,MAIN_X_1,MAIN_Y_1);
-    reset_org_cpy(P2,MAIN_X_1,MAIN_Y_1);
-    shuffle_block(P1);
-    shuffle_block(P1);
-    shuffle_block(P2);
-    shuffle_block(P2);
-    //debug();
-    set_new_block(P1, MAIN_X_1, MAIN_Y_1);
-    set_new_block(P2, MAIN_X_1, MAIN_Y_1);
-    set_shadow_block(P1);
-    set_shadow_block(P2);
-    Player_info[0].x = 3;
-    Player_info[0].y = 1;
-    Player_info[1].x = 2 * MAIN_X_1 + 17;
-    Player_info[1].y = 1;
-    draw_game_2p_battle_scene();
-    //리셋 끝
-
-
-
-    while (1) {
-        for (int i = 0; i < 5; ++i) {
-            //check_key(P1,MAIN_X_1, MAIN_Y_1);
-        }
-        drop_block(P1,MAIN_X_1,MAIN_Y_1);
-        //drop_block(P2,MAIN_X_1,MAIN_Y_1);
-        draw_map(x[0], y[0], P1, MAIN_X_1, MAIN_Y_1);
-        draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
-        //execute_2p_battle_game_func(draw_map);
-        if (P1->new_block_on) {
-            new_block(P1);
-            set_new_block(P1, MAIN_X_1, MAIN_Y_1);
-            set_shadow_block(P1);
-            P1->new_block_on = 0;
-            draw_next(x[0] + MAIN_X_1 + 1, y[0] + 2, P1, MAIN_X_1, MAIN_Y_1);
-        }
-        Sleep(200);
-    }
-}
 
 void draw_game_2p_battle_scene(void) { // 기본적인 틀 그리기, 
     int x = 3, y = 1;
@@ -1255,7 +1221,9 @@ void drop_block(struct Player_info* player, int dx, int dy) {
             }
         }
         player->crush_on = 0; //flag를 끔 
-        //check_line(); //라인체크를 함 
+        check_line(player->x, player->y,player,dx,dy); //라인체크를 함 
+        //check_attack_on
+        check_get_attacked(player->x, player->y, player, dx, dy);
         player->new_block_on = 1; //새로운 블럭생성 flag를 켬    
         return; //함수 종료 
     }
@@ -1322,6 +1290,8 @@ void execute_2p_battle_game_func(GAME_FUNC f) {
 }
 
 void init_game(int x, int y, struct Player_info* player, int dx, int dy) {
+    player->x = x;
+    player->y = y;
     init_player(player);
     reset_org_cpy(player,dx, dy);
     shuffle_block(player);
@@ -1353,6 +1323,11 @@ void init_player(struct Player_info* player) {
     player->hold_block_type = -1;
     player->hold_on = 0;
     player->new_hold_on = 0;
+    player->combo = 0;
+    player->attack_on = 0;
+    player->sent_garbage = 0;
+    player->new_hold_on = 0;
+    player->attacked = 0;
     init_queue(&player->key_queue);
     
 }
@@ -1404,7 +1379,7 @@ void hard_drop(struct Player_info* player, int dx, int dy) {
 }
 
 
-int check_is_rotatable(struct Player_info* player, int type, int rotation, int wise, int bx, int by) {
+int check_is_rotatable(struct Player_info* player, int type, int rotation, int wise, int bx, int by, int dx, int dy) {
 
     int index = 1;
     if (type == 1) index = 0;
@@ -1416,6 +1391,7 @@ int check_is_rotatable(struct Player_info* player, int type, int rotation, int w
         rot = (rotation + 3) % 4;
     }
     for (int i = 0; i < 5; ++i) {
+        if (bx + wall_kick_data[index][rotation][wise][i][0]<0 || bx + wall_kick_data[index][rotation][wise][i][0]>dx || by - wall_kick_data[index][rotation][wise][i][1]<0 || by - wall_kick_data[index][rotation][wise][i][1]>dy) continue; //
         if (check_crush(player, type, rot, bx + wall_kick_data[index][rotation][wise][i][0], by - wall_kick_data[index][rotation][wise][i][1]) == TRUE)
             return i;
     }
@@ -1427,7 +1403,7 @@ void rotate(struct Player_info* player, int dx, int dy) {
     if (type == 0) return;
     int rotation = player->b_rotation;
     rotation = (rotation + 1) % 4;
-    int i = check_is_rotatable(player, type, player->b_rotation, CLOCKWISE, player->bx, player->by);
+    int i = check_is_rotatable(player, type, player->b_rotation, CLOCKWISE, player->bx, player->by,dx, dy);
     int index = 1;
     if (type == 1) index = 0;
     if (i == -1) return;
@@ -1437,6 +1413,46 @@ void rotate(struct Player_info* player, int dx, int dy) {
         set_shadow_block(player);
     }
     
+}
+
+
+void rotate_counter(struct Player_info* player, int dx, int dy) {
+    int type = player->b_type[0][player->b_now];
+    if (type == 0) return;
+    int rotation = player->b_rotation;
+    rotation = (rotation + 3) % 4;
+    int i = check_is_rotatable(player, type, player->b_rotation, COUNTER_CLOCKWISE, player->bx, player->by,dx ,dy);
+    int index = 1;
+    if (type == 1) index = 0;
+    if (i == -1) return;
+    else {
+        rotate_block(player, dx, dy, player->bx + wall_kick_data[index][player->b_rotation][COUNTER_CLOCKWISE][i][0], player->by - wall_kick_data[index][player->b_rotation][COUNTER_CLOCKWISE][i][1], COUNTER_CLOCKWISE);
+        erase_shadow_block(player, dx, dy);
+        set_shadow_block(player);
+    }
+}
+
+void attack(struct Player_info* targer, int damage) {
+
+}
+
+void garbage_block(int x, int y, struct Player_info* target,int dx, int dy) {
+    for (int i = 4; i < dy; ++i) {
+        for (int j = 1; j < dx-1; ++j) {
+            if (target->main_org[i - 1][j].b_status == ACTIVE_BLOCK || target->main_org[i][j].b_status == ACTIVE_BLOCK) continue;
+            target->main_org[i - 1][j].b_color = target->main_org[i][j].b_color;
+            target->main_org[i - 1][j].b_status = target->main_org[i][j].b_status;
+        }
+    }
+    int n = (rand() % (dx - 2)) + 1;
+    target->main_org[dy - 2][n].b_status = EMPTY;
+    target->main_org[dy - 2][n].b_color = COLOR_RESET;
+    for (int j = 1; j < dx - 1; ++j) {
+        if (j == n) continue;
+        target->main_org[dy - 2][j].b_status = INACTIVE_BLOCK;
+        target->main_org[dy - 2][j].b_color = COLOR_RESET;
+    }
+    draw_map(target-> x, target->y,target, dx, dy);
 }
 
 void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
@@ -1468,6 +1484,7 @@ void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
         rotate(player,dx,dy);
         break;
     case ROTATE_COUNTER_KEY:
+        rotate_counter(player, dx, dy);
         break;
     case HOLD_KEY:
         if (player->hold_on) {
@@ -1477,12 +1494,16 @@ void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
         hold(x, y, player, dx, dy);
         break;
     case BACK_KEY:
+        garbage_block(x,y,P2,dx,dy);
         break;
     }
-    draw_map(x, y, player, dx, dy);
+    draw_map(x,y, player, dx, dy);
     
     if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) {
         erase_shadow_block(player,dx,dy);
+        if (player->b_type[0][player->b_now] == 6) {
+            player->t_spin_available = 1;
+        }
         Sleep(200);
     }
     //블록이 충돌중인경우 추가로 이동및 회전할 시간을 갖음 
@@ -1493,6 +1514,13 @@ void update_game(int x, int y, struct Player_info* player, int dx, int dy) {
     if (!player->new_hold_on) {
         drop_block(player, dx, dy);
     }   
+    draw_map(x, y, player, dx, dy);
+    send_attack(player);
+    if (check_game_over(player, dx, dy) == TRUE) {
+        is_game_over = 1;
+        game_over_func(player);
+        return;
+    }
     if (player->new_block_on) {
         new_block(player);
         set_new_block(player, dx, dy);
@@ -1505,8 +1533,45 @@ void update_game(int x, int y, struct Player_info* player, int dx, int dy) {
     erase_shadow_block(player,dx,dy);
     set_shadow_block(player);
     draw_map(x,y, player, dx, dy);
+
     
 }
+
+
+void check_get_attacked(int x, int y, struct Player_info* player, int dx, int dy) {
+    if (player->attacked > 0) {
+
+        for (int i = 0; i < player->attacked; ++i) {
+            garbage_block(x, y, player, dx, dy);
+        }
+    }
+    player->attacked = 0;
+}
+
+void send_attack(struct Player_info* player) {
+    int damage = 0;
+    if (player->attack_on == 1) {
+        
+        damage += player->sent_garbage;
+        damage += combo_damage[player->combo];
+        player->target->attacked += damage;
+        
+        player->sent_garbage = 0;
+        player->combo = 0;
+        player->attack_on = 0;
+    }
+    
+}
+
+int check_game_over(struct Player_info* player, int dx, int dy) {
+    for (int i = 1; i < dx - 2; i++) {
+        if (player->main_org[3][i].b_status > 0) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 
 
 void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
@@ -1541,7 +1606,7 @@ void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
                 if (key == Player_info[i].hold_key) {
                     enqueue(&(Player_info[i].key_queue), HOLD_KEY);
                 }
-                if (key == Player_info[i].pause_key) {
+                if (key == Player_info[i].esc_key) {
                     enqueue(&(Player_info[i].key_queue), BACK_KEY);
                 }
             }
@@ -1553,8 +1618,9 @@ void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
 }
 
 
-void game_scene(MODE_FUNC f) {
+void game_scene(MODE_FUNC f, OPTION_FUNC o) {
     f(init_game);
+    o();
     //HANDLE hThrd_getch = (HANDLE)_beginthreadex(NULL, 0, main_theme, 0, 0, NULL);
     while (1) {
         for (int i = 0; i < 20; ++i) {
@@ -1562,7 +1628,143 @@ void game_scene(MODE_FUNC f) {
             Sleep(25);
         }
         f(update_game);
+        if (is_game_over) {
+            return;
+        }
+        Sleep(100);
+    }
+}
+
+void game_over_2p_battle_game(struct Player_info* player) {
+    int winner;
+    if (player == P1) winner = 2;
+    else winner = 1;
+    
+    _endthreadex(hTHrd_input);
+    int x = 5;
+    int y = 5;
+    gotoxy(x, y + 0); printf("▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤"); //게임오버 메세지 
+    gotoxy(x, y + 1); printf("▤                              ▤");
+    gotoxy(x, y + 2); printf("▤  +-----------------------+   ▤");
+    gotoxy(x, y + 3); printf("▤  |  G A M E  O V E R..   |   ▤");
+    gotoxy(x, y + 4); printf("▤  +-----------------------+   ▤");
+    gotoxy(x, y + 5); printf("▤   WINNER IS PLAYER  %d        ▤", winner);
+    gotoxy(x, y + 6); printf("▤                              ▤");
+    gotoxy(x, y + 7); printf("▤  Press any key to restart..  ▤");
+    gotoxy(x, y + 8); printf("▤                              ▤");
+    gotoxy(x, y + 9); printf("▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤");
+
+}
+
+void option_2p_battle_game(void) {
+    P1->is_attack_mode = 1;
+    P2->is_attack_mode = 1;
+    P1->attack_on = 0;
+    P2->attack_on = 0;
+    P1->target = P2;
+    P2->target = P1;
+    game_over_func = game_over_2p_battle_game;
+    is_game_over = 0;
+}
+
+
+
+void check_line(int x, int y, struct Player_info* player, int dx, int dy) {
+    int i, j, k, l;
+
+    int block_amount; //한줄의 블록갯수를 저장하는 변수 
+    int line=0;
+
+    for (i = dy - 2; i > 3;) { //i=MAIN_Y-2 : 밑쪽벽의 윗칸부터,  i>3 : 천장(3)아래까지 검사 
+        block_amount = 0; //블록갯수 저장 변수 초기화 
+        for (j = 1; j < dx - 1; j++) { //벽과 벽사이의 블록갯루를 셈 
+            if (player->main_org[i][j].b_status > 0) block_amount++;
+        }
+        if (block_amount == dx - 2) { //블록이 가득 찬 경우 
+            line++;
+            for (k = i; k > 1; k--) { //윗줄을 한칸씩 모두 내림(윗줄이 천장이 아닌 경우에만) 
+                for (l = 1; l < dx - 1; l++) {
+                    if (player->main_org[k - 1][l].b_status != CEILLING) {
+                        player->main_org[k][l].b_status = player->main_org[k - 1][l].b_status;
+                        player->main_org[k][l].b_color = player->main_org[k - 1][l].b_color;
+                    } 
+                    if (player->main_org[k - 1][l].b_status == CEILLING) {
+                        player->main_org[k][l].b_status = EMPTY;
+                        player->main_org[k][l].b_color = COLOR_RESET;
+                    } 
+                    //윗줄이 천장인 경우에는 천장을 한칸 내리면 안되니까 빈칸을 넣음 
+                }
+            }
+        }
+        else i--;
+    }
+    if (line>0) { //줄 삭제가 있는 경우 점수와 레벨 목표를 새로 표시함  
+        player->combo++;
+        if (player->t_spin_available == 1) {
+            player->sent_garbage += t_spin_damage[line];
+        }
+        else {
+            player->sent_garbage += line_damage[line];
+        }
+        
+        draw_map(x, y, player,dx, dy);
+    }
+    else {
+        player->attack_on = 1;
+    }
+    player->t_spin_available = 0;
+}
+
+
+/* 코드 쓰레기통
+
+void game_2p_battle_scene(void) {
+    //리셋 시작
+    new_block_on = 1;
+    int x[2], y[2];
+    x[0] = 3;
+    y[0] = 1;
+    x[1] = MAIN_X_1 + 16;
+    y[1] = 1;
+    crush_on = 0;
+    reset_org_cpy(P1,MAIN_X_1,MAIN_Y_1);
+    reset_org_cpy(P2,MAIN_X_1,MAIN_Y_1);
+    shuffle_block(P1);
+    shuffle_block(P1);
+    shuffle_block(P2);
+    shuffle_block(P2);
+    //debug();
+    set_new_block(P1, MAIN_X_1, MAIN_Y_1);
+    set_new_block(P2, MAIN_X_1, MAIN_Y_1);
+    set_shadow_block(P1);
+    set_shadow_block(P2);
+    Player_info[0].x = 3;
+    Player_info[0].y = 1;
+    Player_info[1].x = 2 * MAIN_X_1 + 17;
+    Player_info[1].y = 1;
+    draw_game_2p_battle_scene();
+    //리셋 끝
+
+
+
+    while (1) {
+        for (int i = 0; i < 5; ++i) {
+            //check_key(P1,MAIN_X_1, MAIN_Y_1);
+        }
+        drop_block(P1,MAIN_X_1,MAIN_Y_1);
+        //drop_block(P2,MAIN_X_1,MAIN_Y_1);
+        draw_map(x[0], y[0], P1, MAIN_X_1, MAIN_Y_1);
+        draw_map(x[1], y[1], P2, MAIN_X_1, MAIN_Y_1);
+        //execute_2p_battle_game_func(draw_map);
+        if (P1->new_block_on) {
+            new_block(P1);
+            set_new_block(P1, MAIN_X_1, MAIN_Y_1);
+            set_shadow_block(P1);
+            P1->new_block_on = 0;
+            draw_next(x[0] + MAIN_X_1 + 1, y[0] + 2, P1, MAIN_X_1, MAIN_Y_1);
+        }
         Sleep(200);
     }
 }
 
+*/
