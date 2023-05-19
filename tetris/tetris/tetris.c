@@ -139,16 +139,6 @@ struct Player_info *P2 = &Player_info[1];
 
 int has_change(struct block_info* org, struct block_info* cpy);
 
-int left_key[2] = { 128 + LEFT, '4'};
-int right_key[2] = { 128 + RIGHT ,'6'};
-int down_key[2] = { 128 + DOWN, '5'};
-int hard_drop_key[2] = { ' ', '0'};
-int rotate_key[2] = { 'X', '9'};
-int rotate_counter_key[2] = {'Z', '7'};
-int hold_key[2] = { 'C',ENTER};
-int pause_key = 'P';
-int esc_key = ESC;
-
 int blocks[7][4][4][4] = {
 {{0,1,1,0,
   0,1,1,0,
@@ -297,10 +287,6 @@ struct color {
     int r, g, b;
 }b_color[7] = { {240,240,0},{0,240,240},{240,0,0},{0,240,0},{240,160,0},{0,0,240},{160,0,240} };
 
-
-
-
-
 int wall_kick_data[2][4][2][5][2] = {
     {{{{0,0},{-2,0},{1,0},{-2,-1},{1,2}},
     {{0,0},{-1,0},{2,0},{-1,2},{2,-1}}},
@@ -333,38 +319,12 @@ int wall_kick_data[2][4][2][5][2] = {
 int t_spin_damage[4] = { 0,2,4,6 };
 int combo_damage[21] = { 0,0,1,1,2,2,3,3,4,4,4,5,5,5,5,5,5,5,5,5,5};
 int line_damage[5] = { 0,0,1,2,4 };
-int b_type[2][2][7] = { { { 0,1,2,3,4,5,6 } ,{ 0,1,2,3,4,5,6 } } ,{ { 0,1,2,3,4,5,6 } ,{ 0,1,2,3,4,5,6 } } }; // 테트리스 가방 정렬
-int b_rotation[2]; // 블록 회전값 저장 
-int b_now[2]; // 현재 인덱스 저장 
-int bx[2], by[2]; // 이동중인 블록의 게임판상의 x,y좌표를 저장 
-
-
-int main_org[2][XY_MAX][XY_MAX]; //게임판의 정보를 저장하는 배열 모니터에 표시후에 main_cpy로 복사됨 
-int main_cpy[2][XY_MAX][XY_MAX]; //즉 maincpy는 게임판이 모니터에 표시되기 전의 정보를 가지고 있음 
-//main의 전체를 계속 모니터에 표시하지 않고(이렇게 하면 모니터가 깜빡거림) 
-//main_cpy와 배열을 비교해서 값이 달라진 곳만 모니터에 고침 
-
 
 
 
 int key; //키보드로 입력받은 키값을 저장 
-int new_block_on = 0; //새로운 블럭이 필요함을 알리는 flag 
-int crush_on = 0; //현재 이동중인 블록이 충돌상태인지 알려주는 flag 
-int level_up_on = 0; //다음레벨로 진행(현재 레벨목표가 완료되었음을) 알리는 flag 
-int space_key_on = 0; //hard drop상태임을 알려주는 flag 
 
-
-
-int speed; //게임진행속도 
-int level; //현재 level 
-int level_goal; //다음레벨로 넘어가기 위한 목표점수 
-int cnt; //현재 레벨에서 제거한 줄 수를 저장 
-int score; //현재 점수 
-int last_score = 0; //마지막게임점수 
-int best_score = 0; //최고게임점수 
-
-int frame_time = 5;
-
+int frame_time = 5; // 키 입력 단위 시간 // 블럭이 떨어지는데 걸리는 시간 50 틱, 추가 회전 시간 100틱
 
 int is_game_over;
 
@@ -381,7 +341,7 @@ void draw_title_scene(int x, int y, TITLE_MENU menu);
 
 void mode_select_scene(void);
 
-void drop_block(struct Player_info* player, int dx, int dy);
+
 
 //콘솔창 draw/erase 함수
 void init_player(struct Player_info* player);
@@ -425,11 +385,9 @@ void init_game(int x, int y, struct Player_info* player, int dx, int dy);
 void check_input(int x, int y, struct Player_info* player, int dx, int dy);
 void update_game(int x, int y, struct Player_info* player, int dx, int dy);
 
+void drop_block(struct Player_info* player, int dx, int dy);
 
 
-void init_game_2p_battle_scene(void);
-void game_2p_battle_scene(void);
-void draw_game_2p_battle_scene(void);
 
 
 void get_game_input(int p);
@@ -1002,25 +960,6 @@ void new_block(struct Player_info* player) { // 새로운 블록 인덱스 설정하기 //디
     
 }
 
-void set_new_block(struct Player_info* player, int dx, int dy) { //새로운 블록 그리기
-    int i, j;
-    player->bx = (dx / 2) - 1;
-    player->by = 0;
-    player->b_rotation = 0;
-
-
-    new_block_on = 0;
-    for (i = 0; i < 4; i++) { //게임판 bx, by위치에 블럭생성  
-        for (j = 0; j < 4; j++) {
-            if (blocks[player->b_type[0][player->b_now]][player->b_rotation][i][j] == 1) {
-                player->main_org[player->by + i][player->bx + j].b_color = COLOR[player->b_type[0][player->b_now]];
-                player->main_org[player->by + i][player->bx + j].b_status = ACTIVE_BLOCK;
-            }
-        }
-    }
-
-
-}
 
 void set_shadow_block(struct Player_info* player) {
     int type = player->b_type[0][player->b_now];
@@ -1066,23 +1005,7 @@ void erase_shadow_block(struct Player_info* player, int dx, int dy) {
     }
 }
 
-void debug() {
-    for (int i = 0; i < 7; ++i) {
-        printf("%d,", Player_info[0].b_type[0][i]);
-    }
-    /*
-    for (int i = 0; i < 14; ++i) {
-        printf("%d,", *((*b_type[1]) + i));
-    }
-    printf("...");
-    printf("%d, %d", b_now[0], b_now[1]);
-    printf("\n");
-    */
-}
 
-void init_game_2p_battle_scene(void) {
-
-}
 
 
 
@@ -1217,7 +1140,7 @@ int check_is_upper(int k) {// 키보드로  받아온 키 대문자 검사
 void drop_block(struct Player_info* player, int dx, int dy) {
     int i, j;
 
-    if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == true) crush_on = 0; //밑이 비어있으면 crush flag 끔 
+    if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == true) player->crush_on = 0; //밑이 비어있으면 crush flag 끔 
     if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) { //밑이 비어있지않고 crush flag가 켜저있으면 
         for (i = 0; i < dy; i++) { //현재 조작중인 블럭을 굳힘 
             for (j = 0; j < dx; j++) {
@@ -1450,9 +1373,6 @@ void rotate_counter(struct Player_info* player, int dx, int dy) {
     }
 }
 
-void attack(struct Player_info* targer, int damage) {
-
-}
 
 void garbage_block(int x, int y, struct Player_info* target,int dx, int dy) {
     for (int i = 4; i < dy; ++i) {
