@@ -127,6 +127,8 @@ struct Player_info {
     struct Player_info* target; // 공격을 하는 타겟
     int attacked; // 공격을 받은 양 기억해두는 곳
 
+    int damage;
+
 
 }Player_info[2];
 
@@ -594,7 +596,7 @@ void init_data(void) {
     Player_info[1].pause_key = 'P';
     Player_info[1].right_key = '6';
     Player_info[1].rotate_counter_key = '7';
-    Player_info[1].rotate_key = '9';
+    Player_info[1].rotate_key = '8';
     Player_info[1].b_now = 0;
     Player_info[1].b_rotation = 0;
     Player_info[1].bx = 0;
@@ -1549,12 +1551,9 @@ void check_get_attacked(int x, int y, struct Player_info* player, int dx, int dy
 }
 
 void send_attack(struct Player_info* player) {
-    int damage = 0;
     if (player->attack_on == 1) {
         
-        damage += player->sent_garbage;
-        damage += combo_damage[player->combo];
-        player->target->attacked += damage;
+        player->target->attacked += player->sent_garbage;
         
         player->sent_garbage = 0;
         player->combo = 0;
@@ -1640,10 +1639,10 @@ void game_over_2p_battle_game(struct Player_info* player) {
     if (player == P1) winner = 2;
     else winner = 1;
     
-    _endthreadex(hTHrd_input);
+    system("cls");
     int x = 5;
     int y = 5;
-    gotoxy(x, y + 0); printf("▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤"); //게임오버 메세지 
+    gotoxy(x, y + 0); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤"); //게임오버 메세지 
     gotoxy(x, y + 1); printf("▤                              ▤");
     gotoxy(x, y + 2); printf("▤  +-----------------------+   ▤");
     gotoxy(x, y + 3); printf("▤  |  G A M E  O V E R..   |   ▤");
@@ -1652,8 +1651,9 @@ void game_over_2p_battle_game(struct Player_info* player) {
     gotoxy(x, y + 6); printf("▤                              ▤");
     gotoxy(x, y + 7); printf("▤  Press any key to restart..  ▤");
     gotoxy(x, y + 8); printf("▤                              ▤");
-    gotoxy(x, y + 9); printf("▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤ ▤");
-
+    gotoxy(x, y + 9); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
+    while(1){}
+    //_endthreadex(hTHrd_input);
 }
 
 void option_2p_battle_game(void) {
@@ -1706,10 +1706,12 @@ void check_line(int x, int y, struct Player_info* player, int dx, int dy) {
         else {
             player->sent_garbage += line_damage[line];
         }
-        
+        player->attack_on = 1;
         draw_map(x, y, player,dx, dy);
     }
     else {
+        player->sent_garbage += combo_damage[player->combo];
+        player->combo = 0;
         player->attack_on = 1;
     }
     player->t_spin_available = 0;
