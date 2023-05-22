@@ -328,7 +328,7 @@ int line_damage[5] = { 0,0,1,2,4 };
 
 int key; //키보드로 입력받은 키값을 저장 
 
-int frame_time = 1; // 키 입력 단위 시간 // 블럭이 떨어지는데 걸리는 시간 50 틱, 추가 회전 시간 100틱
+int frame_time = 5; // 키 입력 단위 시간 // 블럭이 떨어지는데 걸리는 시간 50 틱, 추가 회전 시간 100틱
 
 int is_game_over;
 
@@ -384,8 +384,7 @@ void draw_mode_select_scene(int x, int y, MODE_TYPE type);
 
 
 void game_scene(MODE_FUNC f, OPTION_FUNC o);
-
-
+void execute_solo_game_func(GAME_FUNC f);
 void execute_2p_battle_game_func(GAME_FUNC f);
 
 void init_game(int x, int y, struct Player_info* player, int dx, int dy);
@@ -742,7 +741,8 @@ void mode_select_scene() {
     
     switch (type) {
     case SOLO_MODE:
-
+        system("cls");
+        game_scene(execute_solo_game_func, option_solo_game);
         break;
 
     case DOUBLE_MODE:
@@ -1308,6 +1308,10 @@ void execute_2p_battle_game_func(GAME_FUNC f) {
     f(29+MAIN_X_1,1,P2,MAIN_X_1,MAIN_Y_1);
 }
 
+void execute_solo_game_func(GAME_FUNC f) {
+    f(10, 1, P1, MAIN_X_1, MAIN_Y_1);
+}
+
 void init_game(int x, int y, struct Player_info* player, int dx, int dy) {
     player->x = x;
     player->y = y;
@@ -1388,6 +1392,7 @@ void hold(int x, int y, struct Player_info* player, int dx, int dy){
         player->bx = (dx / 2) - 1;
         player->by = 0;
     }
+    player->b_rotation = 0;
     draw_hold(x - 9, y + 3, player);
 }
 void hard_drop(struct Player_info* player, int dx, int dy) {
@@ -1473,17 +1478,18 @@ void garbage_block(int x, int y, struct Player_info* target,int dx, int dy) {
 
 void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
     if (player->hard_drop_key_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
-        player->hard_drop_key_on = 1;
+        update_game(x, y, player, dx, dy);
         init_queue(&player->key_queue);
         return;
     }
-    if (player->new_block_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
+    if (player->new_block_on == 1) {
+        update_game(x, y, player, dx, dy);
         return;
     }
     //키입력확인 
     KEY_TYPE type = dequeue(&player->key_queue);
     if (type == NO_KEY) {
-        init_queue(&player->key_queue);
+
         return;
     }
 
@@ -1514,16 +1520,14 @@ void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
         hold(x, y, player, dx, dy);
         break;
     case BACK_KEY:
-        garbage_block(x,y,P2,dx,dy);
         break;
     }
     draw_map(x,y, player, dx, dy);
 
-    init_queue(&player->key_queue);
+
     if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) {
         erase_shadow_block(player,dx,dy);
-        
-        Sleep(200);
+        Sleep(100*frame_time);
     }
     //블록이 충돌중인경우 추가로 이동및 회전할 시간을 갖음 
     
@@ -1568,6 +1572,8 @@ void update_game(int x, int y, struct Player_info* player, int dx, int dy) {
         player->new_hold_on=0;
         player->hold_on = 0;
         draw_next(x + dx + 1, y + 2, player, dx,dy);
+
+        init_queue(&player->key_queue);
     }
     erase_shadow_block(player,dx,dy);
     set_shadow_block(player);
@@ -1597,7 +1603,7 @@ void check_get_attacked(int x, int y, struct Player_info* player, int dx, int dy
 }
 
 void send_attack(struct Player_info* player) {
-    if (player->attack_on == 1) {
+    if (player->attack_on == 1&&player->is_attack_mode ==1) {
         
         player->target->attacked += player->sent_garbage;
         
@@ -1662,6 +1668,7 @@ void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
         
         
         while (_kbhit()) _getch(); //키버퍼를 비움 
+        Sleep(frame_time);
     }
     
 }
@@ -1672,7 +1679,7 @@ void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
 void game_scene(MODE_FUNC f, OPTION_FUNC o) {
     f(init_game);
     o();
-    int n = 250 / frame_time;
+    int n = 100 / frame_time;
     //HANDLE hThrd_getch = (HANDLE)_beginthreadex(NULL, 0, main_theme, 0, 0, NULL);
     while (1) {
         for (int i = 0; i <n ; ++i) {
@@ -1683,7 +1690,7 @@ void game_scene(MODE_FUNC f, OPTION_FUNC o) {
         if (is_game_over) {
             return;
         }
-        Sleep(100*frame_time);
+        
     }
 }
 
@@ -1704,7 +1711,7 @@ void game_over_2p_battle_game(struct Player_info* player) {
     gotoxy(x, y + 7); printf("▤  Press any key to restart..  ▤");
     gotoxy(x, y + 8); printf("▤                              ▤");
     gotoxy(x, y + 9); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
-    //WaitForSingleObject(hTHrd_input, INFINITE); // 쓰레드가 바르게 종료되도록 기다림
+    WaitForSingleObject(hTHrd_input, INFINITE); // 쓰레드가 바르게 종료되도록 기다림
     CloseHandle(hTHrd_input);
     while(1){
         if (_kbhit()) break;
@@ -1753,8 +1760,15 @@ void game_over_solo_game(struct Player_info* player) {
     gotoxy(x, y + 7); printf("▤  Press any key to restart..  ▤");
     gotoxy(x, y + 8); printf("▤                              ▤");
     gotoxy(x, y + 9); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
-    _endthreadex(hTHrd_input);
-    while (1) {}
+    WaitForSingleObject(hTHrd_input, INFINITE); // 쓰레드가 바르게 종료되도록 기다림
+    CloseHandle(hTHrd_input);
+    while (1) {
+        if (_kbhit()) break;
+        Sleep(10);
+    }
+    while (_kbhit()) _getch(); //버퍼에 기록된 키값을 버림
+    system("cls");
+    title_scene();
 }
 
 
