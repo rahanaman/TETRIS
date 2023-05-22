@@ -1733,6 +1733,7 @@ void option_2p_battle_game(void) {
     game_over_func = game_over_2p_battle_game;
     is_game_over = 0;
     hTHrd_input = (HANDLE)_beginthreadex(NULL, 0, get_game_input, 2, 0, NULL);
+    
 }
 
 void option_solo_game(void) {
