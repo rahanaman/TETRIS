@@ -64,11 +64,13 @@ char SHADOW_COLOR[7][20] = { "\033[38;2;240;240;100m","\033[38;2;100;240;240m","
 
 typedef enum { GAME_START = 0, KEY_SETTING, EXIT }TITLE_MENU;
 typedef enum { NO_KEY = 0,LEFT_KEY , RIGHT_KEY, DOWN_KEY, HARD_DROP_KEY, ROTATE_KEY, ROTATE_COUNTER_KEY, HOLD_KEY, BACK_KEY } KEY_TYPE;
+typedef enum { SOLO_MODE, DOUBLE_MODE } MODE_TYPE;
 
 typedef void* GAME_FUNC(int x, int y, struct Player_info* player, int dx, int dy);
 typedef void* MODE_FUNC(GAME_FUNC);
 typedef void* OPTION_FUNC(void);
 typedef void* GAME_OVER_FUNC(struct Player_info* player);
+typedef void* IS_GAME_OVER();
 
 
 struct Key_queue {
@@ -130,6 +132,8 @@ struct Player_info {
 
     int damage;
     
+    int score;
+    int cnt;
 
 
 }Player_info[2];
@@ -324,7 +328,7 @@ int line_damage[5] = { 0,0,1,2,4 };
 
 int key; //키보드로 입력받은 키값을 저장 
 
-int frame_time = 5; // 키 입력 단위 시간 // 블럭이 떨어지는데 걸리는 시간 50 틱, 추가 회전 시간 100틱
+int frame_time = 1; // 키 입력 단위 시간 // 블럭이 떨어지는데 걸리는 시간 50 틱, 추가 회전 시간 100틱
 
 int is_game_over;
 
@@ -375,6 +379,9 @@ void shuffle_block(struct Player_info* player);
 */
 
 
+void mode_select_scene();
+void draw_mode_select_scene(int x, int y, MODE_TYPE type);
+
 
 void game_scene(MODE_FUNC f, OPTION_FUNC o);
 
@@ -422,6 +429,9 @@ void rotate(struct Player_info* player, int dx, int dy);
 void rotate_counter(struct Player_info* player, int dx, int dy);
 
 void option_2p_battle_game(void);
+void option_solo_game(void);
+void game_over_2p_battle_game(struct Player_info* player);
+void game_over_solo_game(struct Player_info* player);
 
 
 unsigned main_theme(void* arg);
@@ -675,8 +685,9 @@ void title_scene(void) {
     switch (menu) {
     case GAME_START:
         system("cls");
-        game_scene(execute_2p_battle_game_func,option_2p_battle_game);
-        //game_2p_battle_scene(); // 나중에 모드로 수정예정
+        mode_select_scene();
+        //
+        
         break;
     case KEY_SETTING:
         system("cls");
@@ -687,7 +698,74 @@ void title_scene(void) {
         exit(0);
         break;
     }
+    return;
 
+}
+
+void mode_select_scene() {
+    int x = 5; //타이틀화면이 표시되는 x좌표
+    int y = 3; //타이틀화면이 표시되는 y좌표
+    MODE_TYPE type = SOLO_MODE;
+    gotoxy(x, y + 0); printf("                              ");
+    gotoxy(x, y + 1); printf("       +--------------+       ");
+    gotoxy(x, y + 2); printf("       |   GAME MODE  |       ");
+    gotoxy(x, y + 3); printf("       +--------------+       ");
+    draw_mode_select_scene(x,y,type);
+    while (1) {
+        if (_kbhit()) {
+            key = _getch();
+            if (key == ESC) {
+                system("cls");
+                title_scene();
+                return;
+            }
+            if (key == ENTER) break;
+            if (key == 224) {
+                do { key = _getch(); } while (key == 224);//방향키지시값을 버림
+                switch (key) {
+                case DOWN: //아래쪽 방향키 눌렀을때-위와 동일하게 처리됨
+                    type = (type + 1) % 2;
+                    while (_kbhit()) _getch();
+                    draw_mode_select_scene(x, y, type);
+                    break;
+                case UP: //위쪽 방향키 눌렀을때
+                    type = (type + 1) % 2;
+                    while (_kbhit()) _getch();
+                    draw_mode_select_scene(x, y, type);
+                    break;
+                }
+            }
+        }
+        while (_kbhit()) _getch();
+        Sleep(10);
+    }
+    
+    switch (type) {
+    case SOLO_MODE:
+
+        break;
+
+    case DOUBLE_MODE:
+        system("cls");
+        game_scene(execute_2p_battle_game_func, option_2p_battle_game);
+        return;
+    }
+
+
+}
+
+void draw_mode_select_scene(int x, int y, MODE_TYPE type) {
+    gotoxy(x, y + 6); printf(CURSOR_OFF); printf("Solo Mode"); printf(CURSOR_OFF);
+    gotoxy(x, y + 10); printf(CURSOR_OFF); printf("Double Mode"); printf(CURSOR_OFF);
+    switch (type) {
+    case SOLO_MODE:
+        gotoxy(x, y + 6); printf(CURSOR_ON_LEFT); printf("Solo Mode"); printf(CURSOR_ON_RIGHT);
+        break;
+
+    case DOUBLE_MODE:
+        gotoxy(x, y + 10); printf(CURSOR_ON_LEFT); printf("Double Mode"); printf(CURSOR_ON_RIGHT);
+    }
+    
 }
 
 //수정예정 - 세팅 키 입력 덜 작성함
@@ -1396,6 +1474,7 @@ void garbage_block(int x, int y, struct Player_info* target,int dx, int dy) {
 void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
     if (player->hard_drop_key_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
         player->hard_drop_key_on = 1;
+        init_queue(&player->key_queue);
         return;
     }
     if (player->new_block_on == 1) { //스페이스바를 누른경우(hard drop) 추가로 이동및 회전할수 없음 break; 
@@ -1403,7 +1482,10 @@ void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
     }
     //키입력확인 
     KEY_TYPE type = dequeue(&player->key_queue);
-    if (type== NO_KEY) return;
+    if (type == NO_KEY) {
+        init_queue(&player->key_queue);
+        return;
+    }
 
     switch (type) {
     case LEFT_KEY:
@@ -1436,8 +1518,8 @@ void check_input(int x, int y, struct Player_info* player, int dx, int dy) {
         break;
     }
     draw_map(x,y, player, dx, dy);
+
     init_queue(&player->key_queue);
-    
     if (player->crush_on && check_crush(player, player->b_type[0][player->b_now], player->b_rotation, player->bx, player->by + 1) == false) {
         erase_shadow_block(player,dx,dy);
         
@@ -1539,6 +1621,9 @@ int check_game_over(struct Player_info* player, int dx, int dy) {
 
 void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
     while (1) {
+        if (is_game_over) {
+            return;
+        }
         if (_kbhit()) { //키입력이 있는 경우  
             key = check_is_upper(_getch());
             if (key == 224) { //방향키인경우 
@@ -1587,9 +1672,10 @@ void get_game_input(int p) { //p=1 1인 플레이어 p=2 2인플레이어
 void game_scene(MODE_FUNC f, OPTION_FUNC o) {
     f(init_game);
     o();
+    int n = 250 / frame_time;
     //HANDLE hThrd_getch = (HANDLE)_beginthreadex(NULL, 0, main_theme, 0, 0, NULL);
     while (1) {
-        for (int i = 0; i < 50; ++i) {
+        for (int i = 0; i <n ; ++i) {
             f(check_input);
             Sleep(frame_time);
         }
@@ -1605,7 +1691,6 @@ void game_over_2p_battle_game(struct Player_info* player) {
     int winner;
     if (player == P1) winner = 2;
     else winner = 1;
-    
     system("cls");
     int x = 5;
     int y = 5;
@@ -1619,8 +1704,15 @@ void game_over_2p_battle_game(struct Player_info* player) {
     gotoxy(x, y + 7); printf("▤  Press any key to restart..  ▤");
     gotoxy(x, y + 8); printf("▤                              ▤");
     gotoxy(x, y + 9); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
-    _endthreadex(hTHrd_input);
-    while(1){}
+    //WaitForSingleObject(hTHrd_input, INFINITE); // 쓰레드가 바르게 종료되도록 기다림
+    CloseHandle(hTHrd_input);
+    while(1){
+        if (_kbhit()) break;
+        Sleep(10);
+    }
+    while (_kbhit()) _getch(); //버퍼에 기록된 키값을 버림
+    system("cls");
+    title_scene();
     
 }
 
@@ -1636,6 +1728,34 @@ void option_2p_battle_game(void) {
     hTHrd_input = (HANDLE)_beginthreadex(NULL, 0, get_game_input, 2, 0, NULL);
 }
 
+void option_solo_game(void) {
+    P1->is_attack_mode = 0;
+    P1->attack_on = 0;
+    P1->target = '\0';
+    game_over_func = game_over_solo_game;
+    is_game_over = 0;
+    hTHrd_input = (HANDLE)_beginthreadex(NULL, 0, get_game_input, 1, 0, NULL);
+}
+
+void game_over_solo_game(struct Player_info* player) {
+
+
+    system("cls");
+    int x = 5;
+    int y = 5;
+    gotoxy(x, y + 0); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤"); //게임오버 메세지 
+    gotoxy(x, y + 1); printf("▤                              ▤");
+    gotoxy(x, y + 2); printf("▤  +-----------------------+   ▤");
+    gotoxy(x, y + 3); printf("▤  |  G A M E  O V E R..   |   ▤");
+    gotoxy(x, y + 4); printf("▤  +-----------------------+   ▤");
+    gotoxy(x, y + 5); printf("▤                              ▤");
+    gotoxy(x, y + 6); printf("▤                              ▤");
+    gotoxy(x, y + 7); printf("▤  Press any key to restart..  ▤");
+    gotoxy(x, y + 8); printf("▤                              ▤");
+    gotoxy(x, y + 9); printf("▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤▤");
+    _endthreadex(hTHrd_input);
+    while (1) {}
+}
 
 
 void check_line(int x, int y, struct Player_info* player, int dx, int dy) {
