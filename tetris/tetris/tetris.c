@@ -57,6 +57,7 @@
 #define XY_MAX 50
 #define COLOR_RESET "\033[0m"
 #define PRINT_BLOCK(X) printf("%s▣%s",X,COLOR_RESET)
+#define PRINT_INACTIVE_BLOCK(X) printf("%s□%s",X,COLOR_RESET)
 #define PRINT_SHADOW_BLOCK(X) printf("%s■%s",X,COLOR_RESET)
 
 char COLOR[7][20] = { "\033[38;2;240;240;0m","\033[38;2;0;240;240m","\033[38;2;240;80;80m","\033[38;2;80;240;80m","\033[38;2;240;160;0m","\033[38;2;80;80;240m","\033[38;2;160;0;240m" };
@@ -1175,7 +1176,7 @@ void draw_map(int x, int y,struct Player_info* player, int dx, int dy) {
                     break;
                 case INACTIVE_BLOCK: //굳은 블럭 모양  
                     //printf("□");
-                    PRINT_BLOCK(player->main_org[i][j].b_color);
+                    PRINT_INACTIVE_BLOCK(player->main_org[i][j].b_color);
                     break;
                 case ACTIVE_BLOCK: //움직이고있는 블럭 모양  
                     PRINT_BLOCK(player->main_org[i][j].b_color);
