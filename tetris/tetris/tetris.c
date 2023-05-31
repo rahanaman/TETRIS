@@ -641,7 +641,7 @@ void draw_title_scene(int x, int y, TITLE_MENU menu) {
 
 
 void title_scene(void) {
-    int x = 5; //타이틀화면이 표시되는 x좌표
+    int x = 27; //타이틀화면이 표시되는 x좌표
     int y = 4; //타이틀화면이 표시되는 y좌표
     int cnt; //타이틀 프레임을 세는 변수
     TITLE_MENU menu = GAME_START;
@@ -703,13 +703,13 @@ void title_scene(void) {
 }
 
 void mode_select_scene() {
-    int x = 5; //타이틀화면이 표시되는 x좌표
+    int x = 30; //타이틀화면이 표시되는 x좌표
     int y = 3; //타이틀화면이 표시되는 y좌표
     MODE_TYPE type = SOLO_MODE;
     gotoxy(x, y + 0); printf("                              ");
-    gotoxy(x, y + 1); printf("       +--------------+       ");
-    gotoxy(x, y + 2); printf("       |   GAME MODE  |       ");
-    gotoxy(x, y + 3); printf("       +--------------+       ");
+    gotoxy(x, y + 1); printf("+--------------+       ");
+    gotoxy(x, y + 2); printf("|   GAME MODE  |       ");
+    gotoxy(x, y + 3); printf("+--------------+       ");
     draw_mode_select_scene(x,y,type);
     while (1) {
         if (_kbhit()) {
@@ -771,7 +771,7 @@ void draw_mode_select_scene(int x, int y, MODE_TYPE type) {
 
 //수정예정 - 세팅 키 입력 덜 작성함
 void setting_scene() {
-    int x = 5; //타이틀화면이 표시되는 x좌표
+    int x = 25; //타이틀화면이 표시되는 x좌표
     int y = 3; //타이틀화면이 표시되는 y좌표
     KEY_TYPE key = LEFT_KEY;
     struct Player_info* player = P1;
