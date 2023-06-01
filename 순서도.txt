@@ -1,10 +1,146 @@
+테트리스 노래 가사
+
+미  시 도 레 미레도 시 라  라 도 미  .
+레 도 시  시시도 레  미  도  라  라    .
+
+레  레 파 라  솔 파 미  미 도 미  레 도 시  시시도 레  미  도  라  라    .
+
+미도레시도라실시미도레시
+
+도미라라시
+
+
+솔# 830.6100f
+라 880.0000f
+시 987.7666f
+도 1046.5020f
+레 1174.6590f
+미 1318.5100f
+파 1396.9130f
+솔 1567.9820f
+솔# 1661.2200f
+라 1760.0000f
+
+=================
+
+game_scene 이 알고 있는 정보
+
+
+MODE_FUNC : 1p, 2p- 배틀 등등의 기본적으로 고정된 정보 (x,y 시작 위치)를 가지고 함수 콜함
+
+
+GAME_FUNC : // 이곳에 적힌 세 가지 함수만 알고 있음
+init_game(); // 초기 초기화 값
+check_input(); // 키 입력을 받는 단계
+update_game(); // 키 입력 단계 이후 기본적인 수정값
+
+==========================
+
+각자 하는 일
+
+init_game(); // 초기 초기화 값
+
+check_input(); // 키 입력을 받는 단계
+update_game(); // 키 입력 단계 이후 기본적인 수정값
+
 순서도
 
-테트리스 인덱스 확인
-7이상이라면, shuffle()
-새로운 블럭 생성
+void draw_game_2p_battle_scene(void) // 기본적인 모든 전투 사이클 여기에서 통제
 
+int new_block(int player): // 초기화 단계에서는 호출 X index = 0 만 따로 초기화
+테트리스 인덱스 확인
+7이상이라면, shuffle();
+새로운 블럭 생성
+이후 인덱스 다시 0으로 초기화
+
+void drop_new_block();
 
 
 
 테트리스 인덱스 ++;
+
+
+
+
+
+draw_new_block();
+org 에 등록해두고 그리는 건 draw_map 에 들어갈 예정
+
+new block()이후에 수정되는 것
+drop_new_block();
+
+
+
+
+
+
+
+///
+
+
+
+테트리스 색상
+
+O - 240,240,0
+I - 0,240,240
+Z - 240, 0, 0
+S - 0, 240, 0
+L  - 240, 160, 0
+J - 0, 0, 240
+T - 160, 0,240
+
+Garbage per Line Clear
+Line Clear	Sent
+Single	0
+Double	1
+Triple	2
+Tetris	4
+T-Spin Single	2
+T-Spin Double	4
+T-Spin Triple	6
+Perfect Clear	10
+Mini T-Spin	+ 0
+back to back	+ 1
+Garbage per Combo
+Combo	Sent	Combo	Sent
+1	+ 0	11	+ 5
+2	+ 1	12	+ 5
+3	+ 1	13	+ 5
+4	+ 2	14	+ 5
+5	+ 2	15	+ 5
+6	+ 3	16	+ 5
+7	+ 3	17	+ 5
+8	+ 4	18	+ 5
+9	+ 4	19	+ 5
+10	+ 4	20	+ 5Lines are sent by clearing lines. Singles only sent lines during a Combo or when a Perfect Clear occurs.
+Back-to-back Tetrises and T-Spin line clears sent 1 more line than usual.
+Mini T-Spins send just as many lines as the line clear itself, unless they get that +1 line back-to-back bonus.
+The game uses the same combo table as Tetris Online Japan / Poland.
+Perfect Clears always sent 10 lines. No additional lines are sent when clearing multiple lines at once or when a combo is going on.
+There's no garbage blocking (thus garbage may be inserted during a combo). However, there's garbage countering (incoming garbage lines are cancelled before garbage is sent over to the opponent)
+If 2 or more pending garbage lines are inserted at once, then there's a big chance that 2 consecutive lines will have the garbage hole in the same column (about 70% for each pair). However, it's unlikely (only a 10% chance) that the bottom-most inserted garbage line will have the hole in the same column as the previously-received garbage line below (if there is any).
+
+
+===============================================
+
+
+    key = 0; //키값 초기화  
+
+    if (_kbhit()) { //키입력이 있는 경우  
+        key = check_is_upper(_getch());
+        if (key == 224) { //방향키인경우 
+            do { key = _getch(); } while (key == 224);//방향키지시값을 버림 
+            switch (key + 128) {
+            }                   //바닥에 닿은 경우 위쪽으로 한칸띄워서 회전이 가능하면 그렇게 함(특수동작)
+        }
+        else { //방향키가 아닌경우 
+            switch (key) {
+            case SPACE: //스페이스키 눌렀을때
+                //space_key_on = 1; //스페이스키 flag를 띄움 
+                while (player->crush_on == 0) { //바닥에 닿을때까지 이동시킴 
+                    drop_block(player, dx, dy);
+                }
+            }
+        }
+    }
+    while (_kbhit()) _getch(); //키버퍼를 비움 
